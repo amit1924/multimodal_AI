@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'fade-in': 'fadeIn 0.5s ease-in',
+                        'pulse-slow': 'pulse 3s infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .neon-shadow {
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+        .dark .neon-shadow {
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+        }
+        
+        /* AI Response Styling */
+        .bold-gradient {
+            font-weight: 600;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .light .bold-gradient {
+            background: linear-gradient(90deg, #1d4ed8, #7c3aed);
+        }
+        .inline-code {
+            font-family: 'Courier New', monospace;
+            background: rgba(59, 130, 246, 0.15);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
+        }
+        .code-block {
+            background: rgba(17, 24, 39, 0.5);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+        .dark .code-block {
+            background: rgba(31, 41, 55, 0.8);
+        }
+        .ai-heading {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .ai-subheading {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0.75rem 0 0.5rem;
+        }
+        .ai-divider {
+            border: none;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
+            margin: 1rem 0;
+        }
+        .colorful-bullet {
+            position: relative;
+            padding-left: 1.25rem;
+            margin-bottom: 0.25rem;
+            line-height: 1.5;
+        }
+        .colorful-bullet::before {
+            content: "•";
+            position: absolute;
+            left: 0.25rem;
+            color: #3b82f6;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+        .numbered-item {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.25rem;
+            counter-increment: list-counter;
+            line-height: 1.5;
+        }
+        .numbered-item::before {
+            content: counter(list-counter) ".";
+            position: absolute;
+            left: 0.25rem;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .ai-quote {
+            border-left: 2px solid #3b82f6;
+            padding: 0.25rem 0.75rem;
+            margin: 0.5rem 0;
+            background: rgba(59, 130, 246, 0.05);
+            border-radius: 0 0.25rem 0.25rem 0;
+        }
+        .ai-paragraph {
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+        .ai-bullet-list, .ai-numbered-list {
+            margin: 0.5rem 0 0.5rem 1rem;
+            padding-left: 0.25rem;
+        }
+    </style>
+</head>
+<body class="dark:bg-gray-900 bg-gray-50 min-h-screen transition-colors duration-300 font-sans">
+    <div class="container mx-auto px-4 py-4 max-w-6xl">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-4">
+            <div class="flex items-center">
+                <div class="mr-3 w-10 h-10 rounded-lg bg-blue-600 dark:bg-blue-700 flex items-center justify-center text-white">
+                    <i class="fas fa-robot text-lg"></i>
+                </div>
+                <h1 class="text-2xl font-bold gradient-text">
+                    AI Assistant
+                </h1>
+                <a href="index.html" class="ml-4 p-2 rounded-lg dark:bg-gray-700 bg-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300 flex items-center space-x-1 text-sm">
+                    <i class="fas fa-home text-gray-700 dark:text-gray-300"></i>
+                    <span class="hidden md:inline">Home</span>
+                </a>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="theme-toggle" class="p-2 rounded-full dark:bg-gray-700 bg-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300 shadow-sm">
+                    <i class="fas fa-moon dark:hidden text-gray-700 text-sm"></i>
+                    <i class="fas fa-sun hidden dark:block text-yellow-300 text-sm"></i>
+                </button>
+                <button id="settings-btn" class="p-2 rounded-full dark:bg-gray-700 bg-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300 shadow-sm">
+                    <i class="fas fa-cog text-gray-700 dark:text-gray-300 text-sm"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Input Section -->
+            <div class="lg:col-span-1 space-y-4">
+                <div class="dark:bg-gray-800 bg-white rounded-xl p-4 shadow-sm neon-shadow transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                    <h2 class="text-lg font-semibold mb-3 dark:text-white text-gray-800 flex items-center">
+                        <i class="fas fa-magic text-blue-500 mr-2 text-sm"></i> Type your query
+                    </h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label for="topic" class="block text-xs font-medium mb-1 dark:text-gray-300 text-gray-600">Topic</label>
+                            <input type="text" id="topic" 
+                                class="w-full px-3 py-2 rounded-lg border dark:border-gray-700 border-gray-300 dark:bg-gray-700/50 bg-gray-50 dark:text-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400 dark:placeholder-gray-500 text-sm"
+                                value="The impact of artificial intelligence on society">
+                        </div>
+                        
+                        <div>
+                            <label for="tone" class="block text-xs font-medium mb-1 dark:text-gray-300 text-gray-600">Tone</label>
+                            <select id="tone" class="w-full px-3 py-2 rounded-lg border dark:border-gray-700 border-gray-300 dark:bg-gray-700/50 bg-gray-50 dark:text-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all text-sm">
+                                <option value="professional">Professional</option>
+                                <option value="academic">Academic</option>
+                                <option value="casual">Casual</option>
+                                <option value="enthusiastic">Enthusiastic</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="length" class="block text-xs font-medium mb-1 dark:text-gray-300 text-gray-600">Length</label>
+                            <select id="length" class="w-full px-3 py-2 rounded-lg border dark:border-gray-700 border-gray-300 dark:bg-gray-700/50 bg-gray-50 dark:text-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all text-sm">
+                                <option value="short" selected>Short (300 words)</option>
+                                <option value="medium">Medium (600 words)</option>
+                                <option value="long">Long (1000 words)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="model-select" class="block text-xs font-medium mb-1 dark:text-gray-300 text-gray-600">Model</label>
+                            <select id="model-select" class="w-full px-3 py-2 rounded-lg border dark:border-gray-700 border-gray-300 dark:bg-gray-700/50 bg-gray-50 dark:text-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all text-sm">
+                                <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro</option>
+                                <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash</option>
+                            </select>
+                        </div>
+                        
+                        <button id="generate-btn" class="w-full py-2 px-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow-md text-sm">
+                            <i class="fas fa-sparkle mr-1 text-xs"></i> Generate Prompt
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dark:bg-gray-800 bg-white rounded-xl p-4 shadow-sm neon-shadow transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                    <h2 class="text-lg font-semibold mb-3 dark:text-white text-gray-800 flex items-center">
+                        <i class="fas fa-chart-line text-blue-500 mr-2 text-sm"></i> Recent Prompts
+                    </h2>
+                    <div class="space-y-2 max-h-48 overflow-y-auto thin-scrollbar">
+                        <div class="flex items-center p-2 rounded-lg dark:bg-gray-700/50 bg-gray-100 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm">
+                            <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center mr-2">
+                                <i class="fas fa-file-alt text-blue-500 text-xs"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium truncate dark:text-white text-gray-800">Future of renewable energy</p>
+                                <p class="text-xs truncate dark:text-gray-400 text-gray-500">2 hours ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-2 rounded-lg dark:bg-gray-700/50 bg-gray-100 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm">
+                            <div class="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center mr-2">
+                                <i class="fas fa-file-alt text-purple-500 text-xs"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium truncate dark:text-white text-gray-800">Blockchain applications</p>
+                                <p class="text-xs truncate dark:text-gray-400 text-gray-500">Yesterday</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-2 rounded-lg dark:bg-gray-700/50 bg-gray-100 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm">
+                            <div class="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center mr-2">
+                                <i class="fas fa-file-alt text-green-500 text-xs"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium truncate dark:text-white text-gray-800">Space exploration</p>
+                                <p class="text-xs truncate dark:text-gray-400 text-gray-500">3 days ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="lg:col-span-2">
+                <div class="dark:bg-gray-800 bg-white rounded-xl shadow-sm neon-shadow h-full transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="flex justify-between items-center p-3 border-b dark:border-gray-700 border-gray-200">
+                        <h2 class="text-lg font-semibold dark:text-white text-gray-800 flex items-center">
+                            <i class="fas fa-scroll text-blue-500 mr-2 text-sm"></i> AI Response
+                        </h2>
+                        <div class="flex space-x-1">
+                            <button id="copy-btn" class="p-1.5 rounded-lg dark:bg-gray-700 bg-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors group relative">
+                                <i class="fas fa-copy dark:text-gray-300 text-gray-600 text-sm"></i>
+                                <span class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-0.5 px-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                    Copy
+                                </span>
+                            </button>
+                            <button id="download-btn" class="p-1.5 rounded-lg dark:bg-gray-700 bg-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors group relative">
+                                <i class="fas fa-download dark:text-gray-300 text-gray-600 text-sm"></i>
+                                <span class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-0.5 px-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                    Download
+                                </span>
+                            </button>
+                            <button id="refresh-btn" class="p-1.5 rounded-lg dark:bg-gray-700 bg-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors group relative">
+                                <i class="fas fa-sync-alt dark:text-gray-300 text-gray-600 text-sm"></i>
+                                <span class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-0.5 px-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                    Regenerate
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="response-container" class="dark:text-gray-300 text-gray-700 overflow-y-auto h-[calc(100vh-180px)] p-4 text-sm">
+                        <div id="response-placeholder" class="text-center py-8 dark:text-gray-500 text-gray-400">
+                            <div class="mx-auto w-16 h-16 mb-4 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 animate-pulse-slow">
+                                <i class="fas fa-comment-dots text-xl"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-1">Your AI-generated prompt will appear here</h3>
+                            <p class="text-sm">Click "Generate Prompt" to get started</p>
+                        </div>
+                        <div id="ai-response" class="hidden fade-in"></div>
+                        <div id="word-count" class="fixed bottom-3 right-3 dark:bg-gray-700 bg-gray-200 px-2 py-0.5 rounded-full text-xs font-medium shadow-sm">
+                            <span id="count">0</span> words
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 opacity-0 invisible transition-all duration-300">
+        <div class="dark:bg-gray-800 bg-white rounded-xl p-4 max-w-xs w-full mx-4 shadow-sm transform transition-all duration-300 scale-95">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold dark:text-white text-gray-800">Settings</h3>
+                <button id="close-settings" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-times dark:text-gray-300 text-gray-600 text-sm"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <h4 class="text-xs font-medium mb-2 dark:text-gray-300 text-gray-600 uppercase tracking-wider">Appearance</h4>
+                    <div class="flex items-center justify-between">
+                        <span class="dark:text-gray-300 text-gray-600 text-sm">Dark Mode</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="dark-mode-toggle" class="sr-only peer">
+                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-medium mb-2 dark:text-gray-300 text-gray-600 uppercase tracking-wider">Text Preferences</h4>
+                    <div class="mb-2">
+                        <label for="font-size" class="block text-xs font-medium mb-1 dark:text-gray-300 text-gray-600">Font Size</label>
+                        <select id="font-size" class="w-full px-3 py-1.5 rounded-lg border dark:border-gray-700 border-gray-300 dark:bg-gray-700 bg-gray-50 dark:text-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all text-sm">
+                            <option value="small">Small</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="large">Large</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="font-family" class="block text-xs font-medium mb-1 dark:text-gray-300 text-gray-600">Font Family</label>
+                        <select id="font-family" class="w-full px-3 py-1.5 rounded-lg border dark:border-gray-700 border-gray-300 dark:bg-gray-700 bg-gray-50 dark:text-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all text-sm">
+                            <option value="poppins" selected>Poppins</option>
+                            <option value="inter">Inter</option>
+                            <option value="roboto">Roboto</option>
+                            <option value="open-sans">Open Sans</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-2 border-t dark:border-gray-700 border-gray-200">
+                    <button class="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-medium rounded-lg transition-colors text-sm">
+                        Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the Gemini AI library
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+        // Initialize with your API key (replace with your actual API key)
+        const genAI = new GoogleGenerativeAI("AIzaSyDsdvYPIRx0taU2zrCZ_RUeNK7OPQGeLFQ");
+        
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const html = document.documentElement;
+
+        // Function to set theme
+        function setTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                darkModeToggle.checked = true;
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                darkModeToggle.checked = false;
+            }
+        }
+
+        // Initialize theme
+        const storedTheme = localStorage.getItem('theme');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (storedTheme === 'dark' || (!storedTheme && systemPrefersDark)) {
+            setTheme(true);
+        } else {
+            setTheme(false);
+        }
+
+        // Toggle handlers
+        themeToggle.addEventListener('click', () => {
+            const isDark = !html.classList.contains('dark');
+            setTheme(isDark);
+        });
+
+        darkModeToggle.addEventListener('change', (e) => {
+            setTheme(e.target.checked);
+        });
+
+        // Settings modal
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettings = document.getElementById('close-settings');
+
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.remove('invisible', 'opacity-0');
+            settingsModal.classList.add('opacity-100');
+            document.querySelector('#settings-modal > div').classList.remove('scale-95');
+            document.querySelector('#settings-modal > div').classList.add('scale-100');
+        });
+
+        closeSettings.addEventListener('click', () => {
+            settingsModal.classList.add('invisible', 'opacity-0');
+            document.querySelector('#settings-modal > div').classList.add('scale-95');
+            document.querySelector('#settings-modal > div').classList.remove('scale-100');
+        });
+
+        // Generate essay
+        const generateBtn = document.getElementById('generate-btn');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const responsePlaceholder = document.getElementById('response-placeholder');
+        const aiResponse = document.getElementById('ai-response');
+        const copyBtn = document.getElementById('copy-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const wordCount = document.getElementById('word-count');
+        const count = document.getElementById('count');
+        const modelSelect = document.getElementById('model-select');
+
+        function formatText(text) {
+            let formatted = text
+                .replace(/\*\*(.*?)\*\*/g, '<span class="bold-gradient">$1</span>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>')
+                .replace(/```([\s\S]*?)```/g, '<pre class="code-block"><code>$1</code></pre>')
+                .replace(/^# (.*$)/gm, '<h1 class="ai-heading">$1</h1>')
+                .replace(/^## (.*$)/gm, '<h2 class="ai-subheading">$1</h2>')
+                .replace(/^### (.*$)/gm, '<h3 class="ai-subheading">$1</h3>')
+                .replace(/^#### (.*$)/gm, '<h4 class="ai-subheading">$1</h4>')
+                .replace(/^##### (.*$)/gm, '<h5 class="ai-subheading">$1</h5>')
+                .replace(/^###### (.*$)/gm, '<h6 class="ai-subheading">$1</h6>')
+                .replace(/---/g, '<hr class="ai-divider">')
+                .replace(/^\s*[-•*]\s+(.*$)/gm, '<li class="colorful-bullet">$1</li>')
+                .replace(/^\s*\d+\.\s+(.*$)/gm, '<li class="numbered-item">$1</li>')
+                .replace(/^>\s*(.*$)/gm, '<blockquote class="ai-quote">$1</blockquote>')
+                .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-blue-500 hover:underline" target="_blank">$1</a>')
+                .replace(/\n/g, "<br>");
+
+            formatted = formatted.replace(
+                /(<li class="colorful-bullet">.*?<\/li>(<br>)?)+/g,
+                '<ul class="ai-bullet-list">$&</ul>'
+            );
+            formatted = formatted.replace(
+                /(<li class="numbered-item">.*?<\/li>(<br>)?)+/g,
+                '<ol class="ai-numbered-list">$&</ol>'
+            );
+
+            formatted = formatted.replace(
+                /([^<>]+)(<br><br>|$)/g,
+                '<p class="ai-paragraph">$1</p>'
+            );
+
+            return formatted;
+        }
+
+        function countWords(text) {
+            return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+        }
+
+        async function generateEssay() {
+            const topic = document.getElementById('topic').value;
+            const tone = document.getElementById('tone').value;
+            const length = document.getElementById('length').value;
+            const modelName = modelSelect.value;
+            
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1 text-xs"></i> Generating...';
+            responsePlaceholder.classList.add('hidden');
+            aiResponse.classList.remove('hidden');
+            aiResponse.innerHTML = '<div class="flex items-center justify-center h-24"><div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div></div>';
+            wordCount.classList.remove('hidden');
+            
+            try {
+                const model = genAI.getGenerativeModel({ 
+                    model: modelName,
+                    generationConfig: {
+                        maxOutputTokens: length === 'short' ? 1000 : length === 'medium' ? 2000 : 3000,
+                        temperature: 0.7,
+                    }
+                });
+
+                const prompt = `Write a detailed ${tone} essay on: ${topic}. 
+                    The essay should be ${length} in length (${length === 'short' ? '300 words' : length === 'medium' ? '600 words' : '1000 words'}). 
+                    Use markdown formatting including:
+                    - Headings (## for main sections)
+                    - Bullet points (-) for lists
+                    - Bold (**) for important terms
+                    - Italic (*) for emphasis
+                    - Code blocks (\`\`\`) for technical terms`;
+                
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const text = response.text();
+                
+                aiResponse.innerHTML = formatText(text);
+                aiResponse.dataset.fullText = text;
+                count.textContent = countWords(text);
+
+            } catch (error) {
+                aiResponse.innerHTML = `<div class="text-red-500 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-start text-sm">
+                    <i class="fas fa-exclamation-triangle mt-0.5 mr-2"></i>
+                    <div>
+                        <h3 class="font-medium">Error generating essay</h3>
+                        <p class="mt-0.5">${error.message}</p>
+                    </div>
+                </div>`;
+                console.error(error);
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-sparkle mr-1 text-xs"></i> Generate Prompt';
+            }
+        }
+
+        generateBtn.addEventListener('click', generateEssay);
+        refreshBtn.addEventListener('click', generateEssay);
+
+        copyBtn.addEventListener('click', () => {
+            if (aiResponse.dataset.fullText) {
+                navigator.clipboard.writeText(aiResponse.dataset.fullText)
+                    .then(() => {
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-0.5 px-1 whitespace-nowrap';
+                        tooltip.textContent = 'Copied!';
+                        copyBtn.appendChild(tooltip);
+                        setTimeout(() => {
+                            tooltip.remove();
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                    });
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (aiResponse.dataset.fullText) {
+                const blob = new Blob([aiResponse.dataset.fullText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ai-essay-${new Date().toISOString().slice(0, 10)}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+    </script>
+</body>
+</html>

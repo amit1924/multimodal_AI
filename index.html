@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis AI Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+  
+    <style>
+        /* Sidebar styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100vh;
+            background: rgba(17, 24, 39, 0.98);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
+            overflow-y: auto;
+        }
+        
+        .sidebar.open {
+            left: 0;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .hamburger-btn {
+            transition: transform 0.3s ease;
+        }
+        
+        .hamburger-btn.open {
+            transform: rotate(90deg);
+        }
+        
+        .nav-item {
+            transition: all 0.2s ease;
+        }
+        
+        .nav-item:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: translateX(5px);
+        }
+        
+        @media (min-width: 768px) {
+            .sidebar {
+                left: 0;
+                width: 80px;
+                overflow: hidden;
+                transition: width 0.4s ease;
+            }
+            
+            .sidebar:hover {
+                width: 280px;
+            }
+            
+            .sidebar:hover .nav-text {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            
+            .nav-text {
+                opacity: 0;
+                transform: translateX(-10px);
+                transition: all 0.3s ease;
+            }
+            
+            .overlay {
+                display: none;
+            }
+        }
+
+      
+    </style>
+</head>
+<body class="gradient-bg text-gray-100 min-h-screen flex transition-colors duration-500 font-sans">
+    <!-- Sidebar Overlay -->
+    <div id="overlay" class="overlay md:hidden"></div>
+    
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="sidebar">
+        <div class="p-4 border-b border-gray-700 flex items-center justify-between md:justify-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                    <i class="fas fa-robot text-blue-400"></i>
+                </div>
+                <span class="font-semibold text-white md:hidden">JARVIS</span>
+            </div>
+            <button id="close-sidebar" class="text-gray-400 hover:text-white md:hidden">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <nav class="p-4 space-y-2">
+            <a href="#" class="nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-white">
+                <i class="fas fa-home text-lg w-6 text-center"></i>
+                <span class="nav-text">Home</span>
+            </a>
+            <a href="chatAI.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-white">
+                <i class="fas fa-comment-alt text-lg w-6 text-center"></i>
+                <span class="nav-text">Chat</span>
+            </a>
+            <a href="generatingImage.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-white">
+                <i class="fas fa-image text-lg w-6 text-center"></i>
+                <span class="nav-text">Image Generator Model 1</span>
+            </a>
+            <a href="imageGenerator.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-white">
+                <i class="fa-solid fa-photo-film  text-lg w-6 text-center"></i>
+                <span class="nav-text">Image Generator Model 2</span>
+            </a>
+          
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-0 md:ml-[80px] transition-all duration-300">
+        <div class="w-full max-w-md md:max-w-3xl mx-auto flex flex-col h-screen p-4 md:p-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6 jarvis-card rounded-xl p-3">
+                <div class="flex items-center space-x-4">
+                    <button id="hamburger-btn" class="hamburger-btn md:hidden text-gray-400 hover:text-blue-400 focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    
+                    <div class="flex items-center space-x-3">
+                        <div class="relative">
+                            <div class="w-3 h-3 rounded-full bg-gray-500" id="status-light"></div>
+                            <div class="absolute inset-0 rounded-full bg-green-500 opacity-0" id="status-glow"></div>
+                        </div>
+                        <span class="font-medium text-sm neon-text" id="status-text">Sleeping</span>
+                        <div id="speaking-indicator" class="hidden items-center space-x-2 text-blue-400">
+                            <div class="w-2 h-2 rounded-full bg-blue-400 pulse"></div>
+                            <span class="text-xs">Speaking</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="listening-indicator" class="hidden items-center space-x-2 bg-gradient-to-r from-red-900/30 to-pink-900/30 px-3 py-1 rounded-full border border-red-500/30">
+                    <div class="w-2 h-2 rounded-full bg-red-500 pulse"></div>
+                    <span class="text-xs">Listening</span>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <button id="clear-chat-btn" class="text-gray-400 hover:text-red-400 transition-colors focus:outline-none" title="Clear Chat">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <button id="settings-btn" class="text-gray-400 hover:text-blue-400 transition-colors focus:outline-none" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Container -->
+            <div id="chat-container" class="jarvis-card flex-grow rounded-xl p-4 overflow-y-auto mb-4 space-y-3">
+                <div class="message">
+                    <div class="flex items-start space-x-2">
+                        <div class="bg-blue-500/20 rounded-full w-8 h-8 flex items-center justify-center">
+                            <i class="fas fa-robot text-blue-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-blue-400 font-medium">Jarvis:</p>
+                            <div class="ai-response">
+                                <p>Hello, I'm Jarvis. Say <span class="text-blue-300 font-semibold">"Jarvis"</span> to wake me up.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex justify-center space-x-4 mt-4">
+                <button id="mic-btn" class="neon-btn w-14 h-14 rounded-full flex items-center justify-center transition-all float focus:outline-none">
+                    <i class="fas fa-microphone text-xl" id="mic-icon"></i>
+                </button>
+                <button id="stop-speech-btn" class="neon-btn-danger w-14 h-14 rounded-full flex items-center justify-center transition-all hidden float focus:outline-none">
+                    <i class="fas fa-stop text-xl"></i>
+                </button>
+                <button id="upload-image-btn" class="neon-btn w-14 h-14 rounded-full flex items-center justify-center transition-all float relative group focus:outline-none">
+                    <i class="fas fa-image text-xl"></i>
+                    <span class="absolute -top-10 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">Upload Image</span>
+                </button>
+            </div>
+
+            <!-- Help Text -->
+            <p class="text-center text-xs text-gray-400 mt-4 animate-pulse">
+                <span class="inline-block hover:text-blue-300 transition-colors cursor-help" title="Voice commands you can use">
+                    Say "Jarvis" to wake me up, "stop speaking" to interrupt
+                </span>
+            </p>
+        </div>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="jarvis-card rounded-xl p-6 max-w-md w-full transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-blue-400">Settings</h3>
+                <button id="close-settings" class="text-gray-400 hover:text-blue-400 focus:outline-none">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Language</label>
+                    <select id="language-select" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="en">English</option>
+                        <option value="hi">Hindi (हिन्दी)</option>
+                        <option value="fr">French (Français)</option>
+                        <option value="de">German (Deutsch)</option>
+                        <option value="hu">Hungarian (Magyar)</option>
+                        <option value="es">Spanish (Español)</option>
+                        <option value="ar">Arabic (العربية)</option>
+                        <option value="zh">Chinese (中文)</option>
+                        <option value="ja">Japanese (日本語)</option>
+                        <option value="ru">Russian (Русский)</option>
+                        <option value="pt">Portuguese (Português)</option>
+                        <option value="it">Italian (Italiano)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Voice Preference</label>
+                    <select id="voice-select" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="default">Default System Voice</option>
+                        <option value="male">Male Voice</option>
+                        <option value="female">Female Voice</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Speech Rate</label>
+                    <input type="range" id="speech-rate" min="0.5" max="2" step="0.1" value="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-gray-400">
+                        <span>Slower</span>
+                        <span id="rate-value">Normal</span>
+                        <span>Faster</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Speech Pitch</label>
+                    <input type="range" id="speech-pitch" min="0.5" max="2" step="0.1" value="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-gray-400">
+                        <span>Lower</span>
+                        <span id="pitch-value">Normal</span>
+                        <span>Higher</span>
+                    </div>
+                </div>
+                
+                <div class="pt-2 flex space-x-3">
+                    <button id="save-settings" class="neon-btn flex-1 py-2 rounded-lg font-medium focus:outline-none">
+                        Save Settings
+                    </button>
+                    <button id="test-voice" class="bg-gray-700 hover:bg-gray-600 flex-1 py-2 rounded-lg font-medium transition-colors focus:outline-none">
+                        Test Voice
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Sidebar functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const closeSidebar = document.getElementById('close-sidebar');
+            
+            function toggleSidebar() {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('open');
+                hamburgerBtn.classList.toggle('open');
+                document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : 'auto';
+            }
+            
+            hamburgerBtn.addEventListener('click', toggleSidebar);
+            closeSidebar.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth < 768) {
+                    if (!sidebar.contains(e.target) && e.target !== hamburgerBtn && !hamburgerBtn.contains(e.target)) {
+                        sidebar.classList.remove('open');
+                        overlay.classList.remove('open');
+                        hamburgerBtn.classList.remove('open');
+                        document.body.style.overflow = 'auto';
+                    }
+                }
+            });
+            
+            // Settings modal functionality
+            const settingsModal = document.getElementById('settings-modal');
+            const settingsBtn = document.getElementById('settings-btn');
+            const closeSettings = document.getElementById('close-settings');
+            
+            function toggleSettingsModal() {
+                settingsModal.classList.toggle('opacity-0');
+                settingsModal.classList.toggle('pointer-events-none');
+                document.querySelector('#settings-modal > div').classList.toggle('scale-95');
+                document.querySelector('#settings-modal > div').classList.toggle('scale-100');
+            }
+            
+            settingsBtn.addEventListener('click', toggleSettingsModal);
+            closeSettings.addEventListener('click', toggleSettingsModal);
+            
+            // Close modal when clicking outside
+            settingsModal.addEventListener('click', (e) => {
+                if (e.target === settingsModal) {
+                    toggleSettingsModal();
+                }
+            });
+            
+            // Range input value displays
+            const speechRate = document.getElementById('speech-rate');
+            const rateValue = document.getElementById('rate-value');
+            const speechPitch = document.getElementById('speech-pitch');
+            const pitchValue = document.getElementById('pitch-value');
+            
+            speechRate.addEventListener('input', () => {
+                const value = parseFloat(speechRate.value);
+                rateValue.textContent = 
+                    value < 0.8 ? 'Slow' : 
+                    value > 1.2 ? 'Fast' : 'Normal';
+            });
+            
+            speechPitch.addEventListener('input', () => {
+                const value = parseFloat(speechPitch.value);
+                pitchValue.textContent = 
+                    value < 0.8 ? 'Low' : 
+                    value > 1.2 ? 'High' : 'Normal';
+            });
+        });
+    </script>
+    
+    <!-- External scripts (placeholders - you'll need to implement these) -->
+    <script type="module" src="script.js"></script>
+    <script src="weather.js"></script>
+    <script src="image.js"></script>
+    <script src="imageAnalyzer.js"></script>
+</body>
+</html>

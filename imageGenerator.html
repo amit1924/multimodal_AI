@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Dream - AI Image Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'fade-in': 'fadeIn 0.5s ease-in',
+                        'pulse-slow': 'pulse 3s infinite',
+                        'neon-pulse': 'neonPulse 4s infinite alternate',
+                        'gradient-shift': 'gradientShift 8s ease infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        neonPulse: {
+                            '0%, 100%': { 
+                                'text-shadow': '0 0 5px #fff, 0 0 10px #fff, 0 0 15px #3b82f6, 0 0 20px #3b82f6',
+                                'box-shadow': '0 0 5px rgba(59, 130, 246, 0.3), 0 0 10px rgba(59, 130, 246, 0.3)'
+                            },
+                            '50%': { 
+                                'text-shadow': '0 0 10px #fff, 0 0 20px #fff, 0 0 30px #3b82f6, 0 0 40px #3b82f6',
+                                'box-shadow': '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.5)'
+                            }
+                        },
+                        gradientShift: {
+                            '0%': { 'background-position': '0% 50%' },
+                            '50%': { 'background-position': '100% 50%' },
+                            '100%': { 'background-position': '0% 50%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradientShift 8s ease infinite;
+        }
+        
+        .neon-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .neon-card:hover {
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+            transform: translateY(-5px);
+        }
+        
+        .neon-btn {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: all 0.3s ease;
+        }
+        
+        .neon-btn:hover {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .neon-input {
+            background: rgba(31, 41, 55, 0.7);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .neon-input:focus {
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+            outline: none;
+        }
+        
+        .gallery-item {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .gallery-item:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .gallery-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .gallery-item:hover::after {
+            opacity: 1;
+        }
+        
+        .gallery-item .actions {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .gallery-item:hover .actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .thin-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        .thin-scrollbar::-webkit-scrollbar-track {
+            background: rgba(31, 41, 55, 0.5);
+            border-radius: 10px;
+        }
+        
+        .thin-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 10px;
+        }
+        
+        .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.7);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen text-gray-100 font-sans bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 bg-fixed">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg neon-pulse">
+                    <i class="fas fa-magic text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold gradient-text">
+                    Neon Dream
+                </h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-all duration-300 shadow-sm">
+                    <i class="fas fa-moon text-blue-400"></i>
+                </button>
+                <a href="index.html" class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-all duration-300 flex items-center space-x-2">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Generator Panel -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="neon-card rounded-xl p-6 shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-cogs text-blue-400 mr-2"></i> Image Settings
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="prompt" class="block text-sm font-medium mb-2">Prompt</label>
+                            <textarea id="prompt" rows="3" class="w-full px-4 py-3 rounded-lg neon-input focus:ring-2 focus:ring-blue-500 placeholder-gray-400" placeholder="Describe the image you want to generate...">A beautiful landscape</textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="style" class="block text-sm font-medium mb-2">Style</label>
+                            <select id="style" class="w-full px-4 py-3 rounded-lg neon-input">
+                                <option value="realistic">Realistic</option>
+                                <option value="fantasy">Fantasy</option>
+                                <option value="anime">Anime</option>
+                                <option value="cyberpunk">Cyberpunk</option>
+                                <option value="watercolor">Watercolor</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="resolution" class="block text-sm font-medium mb-2">Resolution</label>
+                            <select id="resolution" class="w-full px-4 py-3 rounded-lg neon-input">
+                                <option value="512x512">512×512</option>
+                                <option value="768x768">768×768</option>
+                                <option value="1024x1024" selected>1024×1024</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="seed" class="block text-sm font-medium mb-2">Seed</label>
+                            <input type="number" id="seed" value="42" class="w-full px-4 py-3 rounded-lg neon-input" placeholder="Random seed">
+                            <p class="text-xs text-gray-400 mt-1"><i>Each seed generates a new image variation</i></p>
+                        </div>
+                        
+                        <div>
+                            <label for="model" class="block text-sm font-medium mb-2">Model</label>
+                            <select id="model" class="w-full px-4 py-3 rounded-lg neon-input">
+                                <option value="flux">Flux</option>
+                                <option value="stable-diffusion">Stable Diffusion</option>
+                                <option value="dall-e">DALL-E</option>
+                            </select>
+                        </div>
+                        
+                        <button id="generate-btn" class="w-full py-3 px-4 rounded-lg neon-btn text-white font-medium flex items-center justify-center space-x-2">
+                            <i class="fas fa-sparkle"></i>
+                            <span>Generate Image</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="neon-card rounded-xl p-6 shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-history text-blue-400 mr-2"></i> Generation History
+                    </h2>
+                    <div id="history-list" class="space-y-3 max-h-64 overflow-y-auto thin-scrollbar">
+                        <!-- History items will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gallery Section -->
+            <div class="lg:col-span-3">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold gradient-text flex items-center">
+                        <i class="fas fa-images mr-3"></i> Generated Images
+                    </h2>
+                    <div class="flex space-x-3">
+                        <button id="clear-storage" class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-red-600 transition-colors flex items-center space-x-2">
+                            <i class="fas fa-trash"></i>
+                            <span>Clear All</span>
+                        </button>
+                        <button id="refresh-feed" class="px-4 py-2 rounded-lg neon-btn text-white flex items-center space-x-2">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Image Feed -->
+                <div id="image-feed" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Images will be loaded here dynamically -->
+                </div>
+                
+                <!-- Loading More Indicator -->
+                <div id="loading-more" class="mt-8 text-center hidden">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                    <p class="mt-2 text-gray-400">Loading more images...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900/80 border-t border-gray-800 mt-12">
+        <div class="container mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4 gradient-text">Neon Dream</h3>
+                    <p class="text-gray-400">AI-powered image generation with stunning neon aesthetics.</p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Features</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">Image Generation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">Style Transfer</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">AI Upscaling</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">Bulk Processing</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Resources</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">Documentation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">API Reference</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">Community</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Connect</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-blue-600 transition-colors flex items-center justify-center">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-purple-600 transition-colors flex items-center justify-center">
+                            <i class="fab fa-discord"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-pink-600 transition-colors flex items-center justify-center">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-blue-400 transition-colors flex items-center justify-center">
+                            <i class="fab fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500 text-sm">
+                <p>© 2023 Neon Dream. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Image Preview Modal -->
+    <div id="image-modal" class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4 opacity-0 invisible transition-opacity duration-300">
+        <div class="relative max-w-4xl w-full">
+            <button id="close-modal" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-gray-900 hover:bg-gray-800 flex items-center justify-center">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div class="bg-gray-800 rounded-xl overflow-hidden">
+                <img id="modal-image" src="" alt="Preview" class="w-full max-h-[80vh] object-contain">
+                <div class="p-4 bg-gray-900/80 flex justify-between items-center">
+                    <div>
+                        <h3 id="modal-prompt" class="font-medium"></h3>
+                        <p id="modal-details" class="text-sm text-gray-400"></p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="modal-download" class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-blue-600 transition-colors flex items-center space-x-2">
+                            <i class="fas fa-download"></i>
+                            <span>Download</span>
+                        </button>
+                        <button class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-purple-600 transition-colors flex items-center space-x-2">
+                            <i class="fas fa-share-alt"></i>
+                            <span>Share</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+            updateThemeIcon();
+        });
+        
+        function updateThemeIcon() {
+            const icon = themeToggle.querySelector('i');
+            if (html.classList.contains('dark')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+        
+        // Set initial theme
+        if (localStorage.getItem('theme') === 'light' || 
+            (window.matchMedia('(prefers-color-scheme: light)').matches && !localStorage.getItem('theme'))) {
+            html.classList.remove('dark');
+        }
+        updateThemeIcon();
+        
+        // Image Modal
+        const imageModal = document.getElementById('image-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalPrompt = document.getElementById('modal-prompt');
+        const modalDetails = document.getElementById('modal-details');
+        const modalDownload = document.getElementById('modal-download');
+        const closeModal = document.getElementById('close-modal');
+        
+        function openModal(imageUrl, prompt, details) {
+            modalImage.src = imageUrl;
+            modalPrompt.textContent = prompt;
+            modalDetails.textContent = details;
+            imageModal.classList.remove('invisible', 'opacity-0');
+            imageModal.classList.add('opacity-100');
+            document.body.style.overflow = 'hidden';
+            
+            // Set download handler
+            modalDownload.onclick = (e) => {
+                e.stopPropagation();
+                downloadImage(imageUrl, prompt);
+            };
+        }
+        
+        function closeImageModal() {
+            imageModal.classList.add('opacity-0');
+            setTimeout(() => {
+                imageModal.classList.add('invisible');
+            }, 300);
+            document.body.style.overflow = '';
+        }
+        
+        closeModal.addEventListener('click', closeImageModal);
+        imageModal.addEventListener('click', (e) => {
+            if (e.target === imageModal) {
+                closeImageModal();
+            }
+        });
+        
+        // Download function
+        function downloadImage(url, prompt) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `neon-dream-${prompt.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+        
+        // Image Generation
+        const generateBtn = document.getElementById('generate-btn');
+        const promptInput = document.getElementById('prompt');
+        const styleSelect = document.getElementById('style');
+        const resolutionSelect = document.getElementById('resolution');
+        const seedInput = document.getElementById('seed');
+        const modelSelect = document.getElementById('model');
+        const imageFeed = document.getElementById('image-feed');
+        const historyList = document.getElementById('history-list');
+        const clearStorageBtn = document.getElementById('clear-storage');
+        
+        // Store generated images in localStorage
+        const STORAGE_KEY = 'neonDreamGeneratedImages';
+        let generatedImages = [];
+        
+        // Load images from localStorage on page load
+        function loadFromLocalStorage() {
+            const storedImages = localStorage.getItem(STORAGE_KEY);
+            if (storedImages) {
+                generatedImages = JSON.parse(storedImages);
+                renderGallery();
+                updateHistoryList();
+            }
+        }
+        
+        // Save images to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(generatedImages));
+        }
+        
+        // Clear all stored images
+        clearStorageBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear all generated images? This cannot be undone.')) {
+                generatedImages = [];
+                localStorage.removeItem(STORAGE_KEY);
+                renderGallery();
+                updateHistoryList();
+            }
+        });
+        
+        // Render gallery from stored images
+        function renderGallery() {
+            if (generatedImages.length === 0) {
+                imageFeed.innerHTML = `
+                    <div class="text-center py-12 text-gray-500 col-span-full">
+                        <i class="fas fa-image fa-3x mb-4"></i>
+                        <p>No images generated yet. Enter a prompt and click "Generate Image" to get started.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            imageFeed.innerHTML = '';
+            generatedImages.forEach(image => {
+                const galleryItem = document.createElement('div');
+                galleryItem.className = 'gallery-item relative rounded-xl overflow-hidden aspect-square bg-gray-800';
+                galleryItem.innerHTML = `
+                    <img src="${image.url}" alt="${image.prompt}" class="w-full h-full object-cover">
+                    <div class="absolute bottom-0 left-0 right-0 p-4 z-10 actions">
+                        <div class="flex justify-between items-center">
+                            <button class="p-2 rounded-full bg-gray-800 hover:bg-blue-600 transition-colors download-btn">
+                                <i class="fas fa-download text-white"></i>
+                            </button>
+                            <button class="p-2 rounded-full bg-gray-800 hover:bg-purple-600 transition-colors share-btn">
+                                <i class="fas fa-share-alt text-white"></i>
+                            </button>
+                            <button class="p-2 rounded-full bg-gray-800 hover:bg-pink-600 transition-colors like-btn">
+                                <i class="fas fa-heart text-white"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                imageFeed.appendChild(galleryItem);
+            });
+            
+            attachGalleryEventListeners();
+        }
+        
+        // Generate image from API
+        async function generateImage() {
+            const prompt = promptInput.value.trim();
+            const style = styleSelect.value;
+            const resolution = resolutionSelect.value;
+            const seed = seedInput.value;
+            const model = modelSelect.value;
+            
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+            
+            // Show loading state
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> Generating...';
+            
+            try {
+                // Construct API URL based on parameters
+                let apiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+                
+                // Add parameters if needed (note: pollinations.ai API may not use all these)
+                apiUrl += `?width=${resolution.split('x')[0]}&height=${resolution.split('x')[1]}`;
+                if (seed) apiUrl += `&seed=${seed}`;
+                if (model) apiUrl += `&model=${model}`;
+                
+                // Create a unique ID for this generation
+                const generationId = Date.now();
+                
+                // Add placeholder to gallery
+                const placeholderId = `placeholder-${generationId}`;
+                const placeholderHtml = `
+                    <div id="${placeholderId}" class="gallery-item relative rounded-xl overflow-hidden aspect-square bg-gray-800 flex items-center justify-center">
+                        <div class="text-center p-4">
+                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                            <p class="text-sm">Generating "${prompt}"...</p>
+                        </div>
+                    </div>
+                `;
+                
+                imageFeed.insertAdjacentHTML('afterbegin', placeholderHtml);
+                
+                // Create image element (this will trigger the API call)
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; // Enable CORS for canvas operations
+                img.src = apiUrl;
+                img.alt = prompt;
+                img.className = 'w-full h-full object-cover';
+                
+                img.onload = () => {
+                    // Replace placeholder with actual image
+                    const placeholder = document.getElementById(placeholderId);
+                    if (placeholder) {
+                        placeholder.innerHTML = '';
+                        placeholder.appendChild(img);
+                        
+                        // Add action buttons
+                        const actionsHtml = `
+                            <div class="absolute bottom-0 left-0 right-0 p-4 z-10 actions">
+                                <div class="flex justify-between items-center">
+                                    <button class="p-2 rounded-full bg-gray-800 hover:bg-blue-600 transition-colors download-btn">
+                                        <i class="fas fa-download text-white"></i>
+                                    </button>
+                                    <button class="p-2 rounded-full bg-gray-800 hover:bg-purple-600 transition-colors share-btn">
+                                        <i class="fas fa-share-alt text-white"></i>
+                                    </button>
+                                    <button class="p-2 rounded-full bg-gray-800 hover:bg-pink-600 transition-colors like-btn">
+                                        <i class="fas fa-heart text-white"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        placeholder.insertAdjacentHTML('beforeend', actionsHtml);
+                        
+                        // Store the generated image
+                        const imageData = {
+                            id: generationId,
+                            url: apiUrl,
+                            prompt: prompt,
+                            style: style,
+                            resolution: resolution,
+                            seed: seed,
+                            model: model,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        generatedImages.unshift(imageData);
+                        saveToLocalStorage();
+                        updateHistoryList();
+                        attachGalleryEventListeners();
+                    }
+                };
+                
+                img.onerror = () => {
+                    const placeholder = document.getElementById(placeholderId);
+                    if (placeholder) {
+                        placeholder.innerHTML = `
+                            <div class="text-center p-4 text-red-400">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <p>Failed to generate image</p>
+                            </div>
+                        `;
+                    }
+                };
+                
+            } catch (error) {
+                console.error('Error generating image:', error);
+                alert('Failed to generate image. Please try again.');
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-sparkle mr-2"></i> Generate Image';
+            }
+        }
+        
+        // Update history list
+        function updateHistoryList() {
+            historyList.innerHTML = '';
+            
+            generatedImages.slice(0, 5).forEach(image => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'flex items-center p-3 rounded-lg bg-gray-800/50 cursor-pointer hover:bg-gray-700 transition-colors';
+                historyItem.innerHTML = `
+                    <div class="w-10 h-10 rounded-md bg-gray-700 flex items-center justify-center mr-3">
+                        <i class="fas fa-image text-blue-400"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium truncate">${image.prompt}</p>
+                        <p class="text-xs text-gray-400 truncate">${formatTimeAgo(image.timestamp)}</p>
+                    </div>
+                `;
+                
+                historyItem.addEventListener('click', () => {
+                    openModal(
+                        image.url, 
+                        image.prompt, 
+                        `Generated ${formatTimeAgo(image.timestamp)} | ${image.resolution} | ${image.model}`
+                    );
+                });
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // Format time ago
+        function formatTimeAgo(timestamp) {
+            const now = new Date();
+            const date = new Date(timestamp);
+            const seconds = Math.floor((now - date) / 1000);
+            
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+            return `${Math.floor(seconds / 86400)} days ago`;
+        }
+        
+        // Attach event listeners to gallery items
+        function attachGalleryEventListeners() {
+            document.querySelectorAll('.gallery-item').forEach(item => {
+                const img = item.querySelector('img');
+                if (!img) return;
+                
+                // Find the prompt (we'll store it in a data attribute)
+                const prompt = img.alt;
+                
+                // Click to open modal
+                item.addEventListener('click', (e) => {
+                    // Don't open modal if clicking on buttons
+                    if (e.target.closest('.download-btn, .share-btn, .like-btn')) {
+                        return;
+                    }
+                    
+                    // Find the full image data
+                    const imageData = generatedImages.find(img => img.prompt === prompt);
+                    if (imageData) {
+                        openModal(
+                            imageData.url, 
+                            imageData.prompt, 
+                            `Generated ${formatTimeAgo(imageData.timestamp)} | ${imageData.resolution} | ${imageData.model}`
+                        );
+                    } else {
+                        openModal(img.src, prompt, 'Generated just now');
+                    }
+                });
+                
+                // Download button
+                const downloadBtn = item.querySelector('.download-btn');
+                if (downloadBtn) {
+                    downloadBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        downloadImage(img.src, prompt);
+                    });
+                }
+            });
+        }
+        
+        // Refresh feed
+        document.getElementById('refresh-feed').addEventListener('click', () => {
+            renderGallery();
+        });
+        
+        // Generate button click
+        generateBtn.addEventListener('click', generateImage);
+        
+        // Randomize seed on click
+        seedInput.addEventListener('click', () => {
+            seedInput.value = Math.floor(Math.random() * 1000000);
+        });
+        
+        // Initialize
+        loadFromLocalStorage();
+        attachGalleryEventListeners();
+    </script>
+</body>
+</html>

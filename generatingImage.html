@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeonDream AI Image Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'neon-glow': 'neonGlow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        neonGlow: {
+                            '0%': { 'text-shadow': '0 0 5px #fff, 0 0 10px #fff, 0 0 15px #0073e6, 0 0 20px #0073e6' },
+                            '100%': { 'text-shadow': '0 0 10px #fff, 0 0 20px #fff, 0 0 30px #ff00de, 0 0 40px #ff00de' },
+                        }
+                    },
+                    colors: {
+                        neon: {
+                            blue: '#00f2ff',
+                            pink: '#ff00de',
+                            purple: '#8a2be2',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+        .neon-card {
+            background: rgba(15, 23, 42, 0.7);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3), 
+                        0 0 30px rgba(138, 43, 226, 0.2);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+        .neon-btn {
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+        }
+        .neon-btn:hover {
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.8), 
+                         0 0 30px rgba(255, 0, 222, 0.6);
+            transform: translateY(-2px);
+        }
+        .neon-input {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        .neon-input:focus {
+            border-color: rgba(255, 0, 222, 0.7);
+            box-shadow: 0 0 10px rgba(255, 0, 222, 0.4);
+            outline: none;
+        }
+        .neon-text {
+            text-shadow: 0 0 5px rgba(0, 242, 255, 0.7);
+        }
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .gradient-flow {
+            background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #1e1b4b);
+            background-size: 400% 400%;
+            animation: gradientFlow 15s ease infinite;
+        }
+    </style>
+</head>
+<body class="gradient-flow min-h-screen text-white font-sans overflow-x-hidden">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+          
+            <h1 class="text-5xl font-bold mb-4 neon-text animate-neon-glow">
+                <i class="fas fa-robot mr-3"></i>NeonDream AI
+            </h1>
+            
+            <p class="text-xl text-neon-blue">Generate stunning AI-powered images with Pollinations.ai</p>
+        </header>
+        <a href="index.html" class="px-4 py-2 rounded-lg  hover:text-red-700 transition-all duration-300 flex items-center space-x-2">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+
+        <!-- Main Content -->
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Generation Panel -->
+            <div class="w-full lg:w-1/2">
+                <div class="neon-card rounded-xl p-6 mb-6 backdrop-blur-sm">
+                    <h2 class="text-2xl font-bold mb-6 text-neon-pink flex items-center">
+                        <i class="fas fa-magic mr-2"></i> Create Your Image
+                    </h2>
+                    
+                    <div class="mb-6">
+                        <label class="block text-neon-blue mb-2" for="prompt">
+                            <i class="fas fa-comment-dots mr-2"></i>Describe your image
+                        </label>
+                        <textarea 
+                            id="prompt" 
+                            class="neon-input w-full p-4 rounded-lg focus:ring-2 focus:ring-neon-pink text-white placeholder-gray-400"
+                            rows="4"
+                            placeholder="A beautiful landscape with mountains and sunset"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-neon-blue mb-2" for="width">
+                                <i class="fas fa-arrows-alt-h mr-2"></i>Width
+                            </label>
+                            <select id="width" class="neon-input w-full p-3 rounded-lg">
+                                <option value="512">512</option>
+                                <option value="768">768</option>
+                                <option value="1024" selected>1024</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-neon-blue mb-2" for="height">
+                                <i class="fas fa-arrows-alt-v mr-2"></i>Height
+                            </label>
+                            <select id="height" class="neon-input w-full p-3 rounded-lg">
+                                <option value="512">512</option>
+                                <option value="768">768</option>
+                                <option value="1024" selected>1024</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-neon-blue mb-2" for="seed">
+                            <i class="fas fa-seedling mr-2"></i>Seed (for variations)
+                        </label>
+                        <input 
+                            id="seed" 
+                            type="number" 
+                            value="42" 
+                            class="neon-input w-full p-3 rounded-lg"
+                            placeholder="Enter a seed number">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-neon-blue mb-2" for="model">
+                            <i class="fas fa-cog mr-2"></i>Model
+                        </label>
+                        <select id="model" class="neon-input w-full p-3 rounded-lg">
+                            <option value="flux">Flux</option>
+                            <option value="stable-diffusion">Stable Diffusion</option>
+                            <option value="kandinsky">Kandinsky</option>
+                        </select>
+                    </div>
+                    
+                    <button id="generateBtn" class="neon-btn w-full bg-gradient-to-r from-neon-blue to-neon-pink text-white py-4 px-6 rounded-lg font-bold text-lg mb-4 hover:from-neon-pink hover:to-neon-purple transition-all duration-500">
+                        <i class="fas fa-bolt mr-2"></i> Generate Image
+                    </button>
+                    
+                    <div class="flex justify-between">
+                        <button id="clearBtn" class="neon-btn bg-transparent border border-neon-blue text-neon-blue py-2 px-4 rounded-lg hover:bg-neon-blue hover:text-white">
+                            <i class="fas fa-trash mr-2"></i> Clear All
+                        </button>
+                        <button id="randomPromptBtn" class="neon-btn bg-transparent border border-neon-pink text-neon-pink py-2 px-4 rounded-lg hover:bg-neon-pink hover:text-white">
+                            <i class="fas fa-random mr-2"></i> Random Prompt
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- History Panel -->
+                <div class="neon-card rounded-xl p-6 backdrop-blur-sm">
+                    <h2 class="text-2xl font-bold mb-4 text-neon-blue flex items-center">
+                        <i class="fas fa-history mr-2"></i> Your Creations
+                    </h2>
+                    <div id="historyGrid" class="grid grid-cols-3 gap-2">
+                        <!-- Images will be loaded here from localStorage -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Result Panel -->
+            <div class="w-full lg:w-1/2">
+                <div class="neon-card rounded-xl p-6 h-full backdrop-blur-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-neon-purple flex items-center">
+                            <i class="fas fa-image mr-2"></i> Generated Image
+                        </h2>
+                        <div id="downloadSection" class="hidden">
+                            <button id="downloadBtn" class="neon-btn bg-gradient-to-r from-neon-purple to-neon-pink text-white py-2 px-4 rounded-lg text-sm">
+                                <i class="fas fa-download mr-2"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="loadingIndicator" class="hidden flex flex-col items-center justify-center py-12">
+                        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-neon-blue mb-4"></div>
+                        <p class="text-neon-pink">Generating your masterpiece...</p>
+                        <p class="text-sm text-gray-400">This may take a few moments</p>
+                    </div>
+                    
+                    <div id="imagePlaceholder" class="flex items-center justify-center h-96 bg-gray-900 rounded-lg mb-4 relative overflow-hidden">
+                        <div class="text-center p-6">
+                            <i class="fas fa-image text-5xl text-gray-700 mb-4"></i>
+                            <p class="text-gray-600">Your generated image will appear here</p>
+                        </div>
+                    </div>
+                    
+                    <div id="generatedImageContainer" class="hidden">
+                        <img id="generatedImage" src="" alt="Generated AI Art" class="w-full h-auto rounded-lg mb-4">
+                        <div class="flex justify-between">
+                            <button id="saveToGalleryBtn" class="neon-btn bg-gradient-to-r from-neon-blue to-neon-purple text-white py-2 px-4 rounded-lg text-sm">
+                                <i class="fas fa-save mr-2"></i> Save to Gallery
+                            </button>
+                            <button id="newVariationBtn" class="neon-btn bg-gradient-to-r from-neon-pink to-neon-purple text-white py-2 px-4 rounded-lg text-sm">
+                                <i class="fas fa-redo mr-2"></i> New Variation
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="errorMessage" class="hidden p-4 bg-red-900/50 rounded-lg text-red-200 mt-4">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <span id="errorText">There was an error generating your image. Please try again.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-6 mt-12 text-gray-400">
+        <p class="mb-2">Powered by Pollinations.ai API</p>
+        <div class="flex justify-center space-x-4">
+            <a href="#" class="hover:text-neon-blue transition-colors"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="hover:text-neon-pink transition-colors"><i class="fab fa-discord"></i></a>
+            <a href="#" class="hover:text-neon-purple transition-colors"><i class="fab fa-github"></i></a>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const generateBtn = document.getElementById('generateBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const randomPromptBtn = document.getElementById('randomPromptBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const saveToGalleryBtn = document.getElementById('saveToGalleryBtn');
+            const newVariationBtn = document.getElementById('newVariationBtn');
+            const promptInput = document.getElementById('prompt');
+            const widthSelect = document.getElementById('width');
+            const heightSelect = document.getElementById('height');
+            const seedInput = document.getElementById('seed');
+            const modelSelect = document.getElementById('model');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const imagePlaceholder = document.getElementById('imagePlaceholder');
+            const generatedImageContainer = document.getElementById('generatedImageContainer');
+            const generatedImage = document.getElementById('generatedImage');
+            const downloadSection = document.getElementById('downloadSection');
+            const errorMessage = document.getElementById('errorMessage');
+            const historyGrid = document.getElementById('historyGrid');
+            
+            // Sample prompts for random button
+            const samplePrompts = [
+                "A futuristic cityscape at night with neon lights and flying cars, cyberpunk style",
+                "A majestic dragon soaring over a medieval castle at sunset, highly detailed fantasy art",
+                "An astronaut floating in space with a beautiful earth view in the background, ultra realistic",
+                "A serene Japanese garden with cherry blossoms and a wooden bridge, anime style",
+                "A steampunk airship flying through clouds with intricate brass details, digital painting",
+                "A mystical forest with glowing mushrooms and fairies, fantasy art",
+                "A cybernetic samurai standing in the rain with neon signs reflecting on wet pavement",
+                "A surreal landscape with floating islands and waterfalls, dreamlike atmosphere",
+                "A portrait of a robot with human emotions, highly detailed sci-fi art",
+                "An underwater city with coral buildings and mermaids, fantasy illustration"
+            ];
+            
+            // Initialize by loading saved images
+            loadSavedImages();
+            
+            // Event Listeners
+            generateBtn.addEventListener('click', generateImage);
+            clearBtn.addEventListener('click', clearAll);
+            randomPromptBtn.addEventListener('click', generateRandomPrompt);
+            downloadBtn.addEventListener('click', downloadImage);
+            saveToGalleryBtn.addEventListener('click', saveToGallery);
+            newVariationBtn.addEventListener('click', generateNewVariation);
+            
+            // Functions
+            function generateRandomPrompt() {
+                const randomPrompt = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
+                promptInput.value = randomPrompt;
+                
+                // Add small animation
+                promptInput.classList.add('animate-pulse');
+                setTimeout(() => {
+                    promptInput.classList.remove('animate-pulse');
+                }, 1000);
+            }
+            
+            function generateImage() {
+                const prompt = promptInput.value.trim();
+                const width = widthSelect.value;
+                const height = heightSelect.value;
+                const seed = seedInput.value;
+                const model = modelSelect.value;
+                
+                if (!prompt) {
+                    showError("Please enter a prompt to generate an image");
+                    return;
+                }
+                
+                // Show loading state
+                loadingIndicator.classList.remove('hidden');
+                imagePlaceholder.classList.add('hidden');
+                generatedImageContainer.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+                
+                // Disable generate button during generation
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<i class="fas fa-cog fa-spin mr-2"></i> Generating...';
+                
+                // Generate image URL with Pollinations.ai API
+                const encodedPrompt = encodeURIComponent(prompt);
+                const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&model=${model}`;
+                
+                // Create a new image element to test if the URL is valid
+                const testImage = new Image();
+                testImage.onload = function() {
+                    // Display the generated image
+                    generatedImage.src = imageUrl;
+                    generatedImage.alt = prompt;
+                    
+                    // Hide loading and show result
+                    loadingIndicator.classList.add('hidden');
+                    generatedImageContainer.classList.remove('hidden');
+                    downloadSection.classList.remove('hidden');
+                    
+                    // Re-enable generate button
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = '<i class="fas fa-bolt mr-2"></i> Generate Image';
+                    
+                    // Add animation to the new image
+                    generatedImage.classList.add('animate-float');
+                };
+                
+                testImage.onerror = function() {
+                    showError("Failed to generate image. Please try again with a different prompt.");
+                    loadingIndicator.classList.add('hidden');
+                    imagePlaceholder.classList.remove('hidden');
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = '<i class="fas fa-bolt mr-2"></i> Generate Image';
+                };
+                
+                testImage.src = imageUrl;
+            }
+            
+            function generateNewVariation() {
+                // Generate a new random seed for variation
+                seedInput.value = Math.floor(Math.random() * 1000000);
+                generateImage();
+            }
+            
+            function downloadImage() {
+                if (!generatedImage.src) return;
+                
+                // Create a temporary anchor element
+                const link = document.createElement('a');
+                link.href = generatedImage.src;
+                link.download = `ai-art-${Date.now()}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Add feedback animation
+                downloadBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Downloaded!';
+                setTimeout(() => {
+                    downloadBtn.innerHTML = '<i class="fas fa-download mr-2"></i> Download';
+                }, 2000);
+            }
+            
+            function saveToGallery() {
+                if (!generatedImage.src) return;
+                
+                // Get current gallery from localStorage
+                let gallery = JSON.parse(localStorage.getItem('aiImageGallery') || '[]');
+                
+                // Add new image
+                gallery.unshift({
+                    url: generatedImage.src,
+                    prompt: promptInput.value.trim(),
+                    width: widthSelect.value,
+                    height: heightSelect.value,
+                    seed: seedInput.value,
+                    model: modelSelect.value,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Keep only the last 12 images
+                if (gallery.length > 12) {
+                    gallery = gallery.slice(0, 12);
+                }
+                
+                // Save back to localStorage
+                localStorage.setItem('aiImageGallery', JSON.stringify(gallery));
+                
+                // Update the history display
+                loadSavedImages();
+                
+                // Add feedback animation
+                saveToGalleryBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Saved!';
+                setTimeout(() => {
+                    saveToGalleryBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Save to Gallery';
+                }, 2000);
+            }
+            
+            function loadSavedImages() {
+                const gallery = JSON.parse(localStorage.getItem('aiImageGallery') || '[]');
+                historyGrid.innerHTML = '';
+                
+                if (gallery.length === 0) {
+                    historyGrid.innerHTML = '<p class="text-gray-500 col-span-3 text-center py-8">Your generated images will appear here</p>';
+                    return;
+                }
+                
+                gallery.forEach((item, index) => {
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.className = 'relative group cursor-pointer';
+                    imgWrapper.title = item.prompt;
+                    
+                    const img = document.createElement('img');
+                    img.src = item.url;
+                    img.alt = item.prompt;
+                    img.className = 'w-full h-24 object-cover rounded-lg opacity-90 hover:opacity-100 transition-opacity';
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'absolute top-1 right-1 bg-red-600/80 text-white p-1 rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity';
+                    deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        deleteImage(index);
+                    };
+                    
+                    imgWrapper.appendChild(img);
+                    imgWrapper.appendChild(deleteBtn);
+                    imgWrapper.onclick = () => viewImage(item);
+                    
+                    historyGrid.appendChild(imgWrapper);
+                });
+            }
+            
+            function deleteImage(index) {
+                let gallery = JSON.parse(localStorage.getItem('aiImageGallery') || '[]');
+                gallery.splice(index, 1);
+                localStorage.setItem('aiImageGallery', JSON.stringify(gallery));
+                loadSavedImages();
+            }
+            
+            function viewImage(item) {
+                promptInput.value = item.prompt;
+                widthSelect.value = item.width;
+                heightSelect.value = item.height;
+                seedInput.value = item.seed;
+                modelSelect.value = item.model;
+                generatedImage.src = item.url;
+                generatedImage.alt = item.prompt;
+                
+                imagePlaceholder.classList.add('hidden');
+                generatedImageContainer.classList.remove('hidden');
+                downloadSection.classList.remove('hidden');
+                
+                // Scroll to image
+                generatedImageContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            function clearAll() {
+                // Clear current image display
+                imagePlaceholder.classList.remove('hidden');
+                generatedImageContainer.classList.add('hidden');
+                downloadSection.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+                
+                // Clear input
+                promptInput.value = '';
+                seedInput.value = Math.floor(Math.random() * 1000000);
+                
+                // Add animation effect
+                const elements = [imagePlaceholder, promptInput];
+                elements.forEach(el => {
+                    el.classList.add('animate-pulse');
+                    setTimeout(() => {
+                        el.classList.remove('animate-pulse');
+                    }, 1000);
+                });
+            }
+            
+            function showError(message) {
+                document.getElementById('errorText').textContent = message;
+                errorMessage.classList.remove('hidden');
+                
+                // Scroll to error
+                errorMessage.scrollIntoView({ behavior: 'smooth' });
+                
+                // Shake animation
+                errorMessage.classList.add('animate-shake');
+                setTimeout(() => {
+                    errorMessage.classList.remove('animate-shake');
+                }, 500);
+            }
+            
+            // Add shake animation dynamically since Tailwind doesn't have it by default
+            const style = document.createElement('style');
+            style.textContent = `
+                .animate-shake {
+                    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+                }
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                    20%, 40%, 60%, 80% { transform: translateX(5px); }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>
