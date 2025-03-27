@@ -1,7 +1,56 @@
 import { genAI } from "./gemini.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+  // MOBILE DETECTION
+  // ====================
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
   let chat;
+
+  // Image handling classes (simplified implementations)
+  class DynamicImageGenerator {
+    async generateImage(prompt) {
+      // Simplified implementation - replace with actual image generation logic
+      console.log("Generating image for prompt:", prompt);
+      const img = document.createElement("img");
+      img.src =
+        "https://via.placeholder.com/300x200?text=" +
+        encodeURIComponent(prompt);
+      img.alt = prompt;
+      img.className = "generated-image";
+      return { element: img };
+    }
+  }
+
+  class ImageAnalyzer {
+    promptForUpload() {
+      return new Promise((resolve) => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.onchange = (e) => resolve(e.target.files[0]);
+        input.click();
+      });
+    }
+
+    async analyzeImage(imageSource) {
+      // Simplified implementation - replace with actual image analysis logic
+      console.log("Analyzing image:", imageSource);
+      return {
+        success: true,
+        description:
+          "This is a sample image analysis result. The image appears to contain various elements.",
+        url:
+          imageSource instanceof File
+            ? URL.createObjectURL(imageSource)
+            : imageSource,
+        sourceType: imageSource instanceof File ? "file" : "url",
+      };
+    }
+  }
+
   const imageGenerator = new DynamicImageGenerator();
   const imageAnalyzer = new ImageAnalyzer();
 
@@ -31,6 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // App Configuration
   const config = {
+    mobileMicReactivationDelay: 3000, // Longer delay for mobile
+    minQueryLength: isMobile ? 4 : 3, // Require longer queries on mobile
+    mobileConfidenceThreshold: 0.7, // Only accept confident results on mobile
     wakeWords: {
       en: "jarvis",
       hi: "जार्विस",
@@ -82,12 +134,13 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // App State
+  // ====================
   let isActive = false;
   let isListening = false;
-  let isProcessing = false; // Added to track processing state
-  let lastProcessedQuery = ""; // Added for deduplication
-  let lastProcessedTime = 0; // Added for deduplication
-  const QUERY_COOLDOWN = 2000; // 2 seconds cooldown
+  let isProcessing = false;
+  let lastProcessedQuery = "";
+  let lastProcessedTime = 0;
+  const QUERY_COOLDOWN = isMobile ? 2500 : 2000; // Longer cooldown for mobile
   let recognition;
   let isSpeaking = false;
   const synth = window.speechSynthesis;
@@ -126,8 +179,12 @@ document.addEventListener("DOMContentLoaded", () => {
     recognition = new (window.SpeechRecognition ||
       window.webkitSpeechRecognition)();
     recognition.continuous = true;
-    recognition.interimResults = true;
+    recognition.interimResults = !isMobile; // Disable interim on mobile
     recognition.lang = voiceSettings.language;
+
+    if (isMobile) {
+      recognition.maxAlternatives = 1; // Only take top alternative
+    }
 
     recognition.onstart = () => {
       isListening = true;
@@ -152,16 +209,79 @@ document.addEventListener("DOMContentLoaded", () => {
       const results = event.results;
       const last = results[results.length - 1];
 
-      if (last.isFinal && !isProcessing) {
-        const transcript = last[0].transcript.trim().toLowerCase();
+      // Mobile-specific processing
+      if (isMobile) {
+        if (!last.isFinal || isProcessing) return;
+
+        const result = last[0];
+        if (result.confidence < config.mobileConfidenceThreshold) return;
+
+        const transcript = cleanMobileTranscript(
+          result.transcript.trim().toLowerCase()
+        );
+        if (!isValidMobileQuery(transcript)) return;
+
         processVoiceCommand(transcript);
+      } else {
+        if (last.isFinal && !isProcessing) {
+          processVoiceCommand(last[0].transcript.trim().toLowerCase());
+        }
       }
     };
 
     recognition.onerror = (event) => {
       console.error("Speech recognition error", event.error);
+      // Mobile-specific error recovery
+      if (isMobile && ["no-speech", "audio-capture"].includes(event.error)) {
+        setTimeout(() => {
+          if (!isListening) startVoiceRecognition();
+        }, 1000);
+      }
       addMessage("assistant", getLanguageResponse("speechNotSupported"));
     };
+  }
+
+  // Clean mobile transcript
+  function cleanMobileTranscript(transcript) {
+    // Remove common mobile recognition artifacts
+    return transcript
+      .replace(/\b(uh|um|ah|like|you know)\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  // Validate mobile query
+  function isValidMobileQuery(transcript) {
+    // Skip empty or very short queries
+    if (!transcript || transcript.length < config.minQueryLength) return false;
+
+    // Skip queries that are just the wake word
+    if (transcript === currentCommands.wakeWord.toLowerCase()) return false;
+
+    return true;
+  }
+
+  // Handle weather query
+  function handleWeatherQuery(query, addMessage, speak, language) {
+    // Simplified weather handler - replace with actual weather API integration
+    const weatherResponses = {
+      en: "The weather is currently sunny with a temperature of 72°F.",
+      hi: "मौसम वर्तमान में धूप है और तापमान 22°C है।",
+      fr: "Le temps est actuellement ensoleillé avec une température de 22°C.",
+      de: "Das Wetter ist derzeit sonnig bei einer Temperatur von 22°C.",
+      hu: "Az időjárás jelenleg napos, 22°C hőmérséklettel.",
+      es: "El clima está actualmente soleado con una temperatura de 22°C.",
+      ar: "الطقس مشمس حاليا بدرجة حرارة 22°C.",
+      zh: "目前天气晴朗，气温22°C。",
+      ja: "現在の天気は晴れ、気温は22°Cです。",
+      ru: "Сейчас солнечно, температура 22°C.",
+      pt: "O clima está atualmente ensolarado com temperatura de 22°C.",
+      it: "Il tempo è attualmente soleggiato con una temperatura di 22°C.",
+    };
+
+    const response = weatherResponses[language] || weatherResponses.en;
+    addMessage("assistant", response);
+    speak(response);
   }
 
   // Process voice commands with deduplication
@@ -743,6 +863,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     synth.speak(utterance);
   }
+
   // Test voice settings
   function testVoiceSettings() {
     const testTexts = {
