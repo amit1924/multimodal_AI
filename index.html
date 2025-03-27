@@ -114,10 +114,13 @@
         </div>
         
         <nav class="p-4 space-y-2">
-            <a href="/" class="nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
+            <!-- Home link - works by default in GitHub Pages -->
+            <a href="./" class="nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
                 <i class="fas fa-home text-lg w-6 text-center"></i>
                 <span class="nav-text">Home</span>
             </a>
+            
+            <!-- Other pages - using relative paths without leading slash -->
             <a href="chatAI.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
                 <i class="fas fa-comment-alt text-lg w-6 text-center"></i>
                 <span class="nav-text">Chat</span>
@@ -284,6 +287,20 @@
     <script>
         // Sidebar functionality
         document.addEventListener('DOMContentLoaded', function() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            navItems.forEach(item => {
+                const link = item.getAttribute('href');
+                const linkPage = link === './' ? 'index.html' : link;
+                
+                if (linkPage === currentPage || 
+                    (currentPage === '' && linkPage === 'index.html') ||
+                    (currentPage === 'index.html' && linkPage === './')) {
+                    item.classList.add('bg-gray-800', 'text-white');
+                    item.classList.remove('text-gray-300', 'hover:text-white');
+                }
+            });
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
             const hamburgerBtn = document.getElementById('hamburger-btn');
