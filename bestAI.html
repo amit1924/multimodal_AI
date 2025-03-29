@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced AI Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .chat-height {
+            height: calc(100vh - 200px);
+        }
+        @media (max-width: 768px) {
+            .chat-height {
+                height: calc(100vh - 160px);
+            }
+        }
+        @media (max-width: 500px) {
+            .chat-height {
+                height: calc(85vh - 160px);
+            }
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .theme-toggle {
+            transition: all 0.3s ease;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        .ai-response h2 {
+            color: #10f5a0;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            position: relative;
+            padding-left: 0;
+        }
+        .ai-response p {
+            position: relative;
+            padding-left: 0;
+            margin-bottom: 1rem;
+            line-height: 1.7;
+            font-size: 1rem;
+            color: #e5e7eb;
+        }
+        .ai-response ul, .ai-response ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+        .ai-response li {
+            margin-bottom: 0.7rem;
+            position: relative;
+            color: #e5e7eb;
+            line-height: 1.7;
+        }
+        .ai-response li:before {
+            content: "•";
+            position: absolute;
+            left: -1.2rem;
+            color: #8b5cf6;
+            font-weight: bold;
+        }
+        .ai-response code {
+            background-color: rgba(59,130,246,0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            color: #3b82f6;
+            font-size: 0.9rem;
+        }
+        .ai-response pre {
+            background-color: rgba(30,41,59,0.7);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1.2rem 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            border-left: 4px solid #3b82f6;
+        }
+        .copy-btn {
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+        .message-container:hover .copy-btn {
+            opacity: 1;
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .typing-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            margin-right: 6px;
+        }
+        .message-enter {
+            animation: messageEnter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes messageEnter {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .text-shimmer {
+            background: linear-gradient(90deg, #e5e7eb, #a5b4fc, #e5e7eb);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .image-loading {
+            background: linear-gradient(90deg, #1f2937, #374151, #1f2937);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+            border-radius: 0.5rem;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #a5b4fc;
+        }
+        /* Sidebar styles */
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+            z-index: 40;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 280px;
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+            }
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 30;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease-in-out;
+            }
+            .sidebar-overlay.open {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+        /* Hamburger menu */
+        .hamburger {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .hamburger {
+                display: block;
+                cursor: pointer;
+            }
+            .main-content {
+                width: 100%;
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <div class="container mx-auto px-4 py-6 max-w-6xl">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-6">
+            <div class="flex items-center space-x-3">
+                <!-- Hamburger Menu (Mobile Only) -->
+                <button id="hamburgerMenu" class="hamburger p-2 rounded-full bg-gray-800 dark:bg-gray-800 text-gray-700 dark:text-gray-200 mr-2 lg:hidden">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white animate-float">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h1 class="text-3xl font-bold gradient-text">Advanced AI Chat</h1>
+               
+            </div>
+          
+            <div class="flex  items-center space-x-4 ">
+                <a href="index.html">  <i class="fas fa-home"></i></a>
+                <button id="themeToggle" class="hidden md:block theme-toggle p-2 rounded-full bg-gray-800 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:inline"></i>
+                </button>
+                <button id="clearStorage" class="p-2 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Left Panel - Chat History (Sidebar) -->
+            <div id="sidebar" class="sidebar lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden lg:transform-none">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Chat History</h2>
+                    <div class="flex space-x-2">
+                        <button id="newChat" class="p-2 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button id="closeSidebar" class="p-2 rounded-full bg-gray-800 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition lg:hidden">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="chatHistory" class="overflow-y-auto" style="max-height: 500px;">
+                    <!-- Chat history items will be added here -->
+                </div>
+            </div>
+
+            <!-- Middle Panel - Chat Interface -->
+            <div class="main-content lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden flex-1">
+                <div id="chatContainer" class="chat-height overflow-y-auto p-4 space-y-4">
+                    <!-- Welcome message -->
+                    <div class="message-enter">
+                        <div class="flex items-start space-x-3 message-container">
+                            <div class="flex-shrink-0 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 max-w-[85%] relative">
+                                <button class="copy-btn absolute top-2 right-2 p-1 rounded bg-gray-800 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 transition">
+                                    <i class="fas fa-copy text-xs"></i>
+                                </button>
+                                <p class="text-gray-800 dark:text-gray-200">Hello! I'm your AI assistant. You can ask me anything or generate images by starting your prompt with "image:".</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex space-x-2 mb-2">
+                        <button id="textMode" class="mode-btn px-3 py-1 rounded-full bg-blue-500 text-white text-sm font-medium">Text</button>
+                        <button id="imageMode" class="mode-btn px-3 py-1 rounded-full bg-gray-800 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-medium">Image</button>
+                    </div>
+                    <div class="flex space-x-2">
+                        <input id="userInput" type="text" placeholder="Type your message or 'image: description'..." 
+                            class="flex-1 px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <button id="sendBtn" class="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition flex items-center justify-center">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Drawer - Downloads -->
+        <div id="downloadDrawer" class="fixed top-0 right-0 w-80 h-full bg-white dark:bg-gray-800 shadow-lg transform translate-x-full transition-transform duration-300 z-50 overflow-y-auto">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Downloads</h2>
+                <button id="closeDrawer" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div>
+                    <h3 class="font-medium text-gray-800 dark:text-gray-200 mb-2">Generated Text</h3>
+                    <div class="space-y-2">
+                        <button id="downloadText" class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                            <span>Download as TXT</span>
+                            <i class="fas fa-file-alt"></i>
+                        </button>
+                        <button id="copyAllText" class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                            <span>Copy All Text</span>
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-800 dark:text-gray-200 mb-2">Generated Images</h3>
+                    <div id="imageDownloads" class="grid grid-cols-2 gap-2">
+                        <!-- Image download items will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Download Button -->
+        <button id="openDrawer" class="fixed bottom-[90px]  md:bottom-6 right-3 md:right-6  md:bg-blue-500 text-white text-lg  md:rounded-full p-4 shadow-lg hover:bg-blue-600 transition z-40">
+            <i class="fas fa-download"></i>
+        </button>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="fixed bottom-6 left-6 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-16 transition-transform duration-300 z-50 flex items-center space-x-2">
+            <i class="fas fa-check-circle"></i>
+            <span id="toast-message">Copied to clipboard!</span>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatHistory = document.getElementById('chatHistory');
+        const newChatBtn = document.getElementById('newChat');
+        const clearStorageBtn = document.getElementById('clearStorage');
+        const themeToggle = document.getElementById('themeToggle');
+        const textModeBtn = document.getElementById('textMode');
+        const imageModeBtn = document.getElementById('imageMode');
+        const downloadDrawer = document.getElementById('downloadDrawer');
+        const openDrawerBtn = document.getElementById('openDrawer');
+        const closeDrawerBtn = document.getElementById('closeDrawer');
+        const downloadTextBtn = document.getElementById('downloadText');
+        const copyAllTextBtn = document.getElementById('copyAllText');
+        const imageDownloads = document.getElementById('imageDownloads');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+        const hamburgerMenu = document.getElementById('hamburgerMenu');
+        const sidebar = document.getElementById('sidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        // State
+        let currentMode = 'text';
+        let currentChatId = `chat-${Date.now()}`;
+        let chats = JSON.parse(localStorage.getItem('aiChats')) || {};
+        let generatedTexts = JSON.parse(localStorage.getItem('generatedTexts')) || {};
+        let generatedImages = JSON.parse(localStorage.getItem('generatedImages')) || {};
+
+        // Initialize
+        function init() {
+            // Load theme preference
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+
+            // Load chat history
+            updateChatHistoryUI();
+            
+            // Create a new chat if none exists
+            if (!chats[currentChatId]) {
+                chats[currentChatId] = {
+                    id: currentChatId,
+                    title: 'New Chat',
+                    timestamp: Date.now(),
+                    messages: []
+                };
+                saveChats();
+            }
+        }
+
+        // Event Listeners
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        newChatBtn.addEventListener('click', createNewChat);
+        clearStorageBtn.addEventListener('click', clearStorage);
+        themeToggle.addEventListener('click', toggleTheme);
+        textModeBtn.addEventListener('click', () => setMode('text'));
+        imageModeBtn.addEventListener('click', () => setMode('image'));
+        openDrawerBtn.addEventListener('click', openDrawer);
+        closeDrawerBtn.addEventListener('click', closeDrawer);
+        downloadTextBtn.addEventListener('click', downloadTextAsTXT);
+        copyAllTextBtn.addEventListener('click', copyAllText);
+        
+        // Sidebar toggle events
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        closeSidebarBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // Functions
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('open');
+        }
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Disable send button during processing
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            // Add user message to UI
+            addMessageToUI('user', message);
+            
+            // Add user message to current chat
+            chats[currentChatId].messages.push({
+                sender: 'user',
+                content: message,
+                timestamp: Date.now()
+            });
+
+            // Update chat title if it's the first message
+            if (chats[currentChatId].messages.length === 1) {
+                chats[currentChatId].title = message.length > 30 ? message.substring(0, 30) + '...' : message;
+                updateChatHistoryUI();
+            }
+
+            saveChats();
+
+            // Clear input
+            userInput.value = '';
+
+            // Show typing indicator
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'flex items-start space-x-3 fade-in';
+            typingIndicator.innerHTML = `
+                <div class="flex-shrink-0 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 max-w-[85%]">
+                    <div class="flex space-x-2">
+                        <div class="typing-indicator pulse"></div>
+                        <div class="typing-indicator pulse" style="animation-delay: 0.2s"></div>
+                        <div class="typing-indicator pulse" style="animation-delay: 0.4s"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">AI is thinking...</p>
+                </div>
+            `;
+            chatContainer.appendChild(typingIndicator);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Generate response
+            setTimeout(() => {
+                chatContainer.removeChild(typingIndicator);
+                
+                if (currentMode === 'image' || message.toLowerCase().startsWith('image:')) {
+                    generateImage(message);
+                } else {
+                    generateText(message);
+                }
+                
+                // Re-enable send button
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            }, 1000);
+        }
+
+        async function generateText(prompt) {
+            try {
+                // Show processing state
+                const processingIndicator = document.createElement('div');
+                processingIndicator.className = 'flex items-start space-x-3 fade-in';
+                processingIndicator.innerHTML = `
+                    <div class="flex-shrink-0 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 max-w-[85%]">
+                        <p class="text-gray-800 dark:text-gray-200 text-shimmer">Processing your request...</p>
+                    </div>
+                `;
+                chatContainer.appendChild(processingIndicator);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                const apiUrl = `https://text.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+                
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+                
+                let responseText = await response.text();
+                
+                // Remove processing indicator
+                chatContainer.removeChild(processingIndicator);
+                
+                // Clean and format response
+                responseText = cleanResponseText(responseText);
+                let formattedResponse = formatResponse(prompt, responseText);
+
+                // Save generated text
+                const textId = `text-${Date.now()}`;
+                generatedTexts[textId] = {
+                    id: textId,
+                    prompt: prompt,
+                    content: formattedResponse,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('generatedTexts', JSON.stringify(generatedTexts));
+
+                // Add AI response to UI
+                addMessageToUI('ai', formattedResponse, 'text');
+
+                // Add AI response to current chat
+                chats[currentChatId].messages.push({
+                    sender: 'ai',
+                    content: formattedResponse,
+                    type: 'text',
+                    timestamp: Date.now()
+                });
+                saveChats();
+            } catch (error) {
+                console.error('Error generating text:', error);
+                addMessageToUI('ai', "Sorry, I encountered an error processing your request. Please try again.", 'text');
+            }
+        }
+
+        function cleanResponseText(text) {
+            // Remove markdown formatting characters
+            text = text.replace(/\*\*/g, '')  // Remove **bold**
+                      .replace(/\*/g, '')     // Remove *italics*
+                      .replace(/__/g, '')     // Remove __underline__
+                      .replace(/~~/g, '')     // Remove ~~strikethrough~~
+                      .replace(/^#+\s+/gm, '') // Remove markdown headers
+                      .replace(/\[(.*?)\]\(.*?\)/g, '$1'); // Remove markdown links
+            
+            // Clean up bullet points
+            text = text.replace(/^\s*[-*+]\s+/gm, '• '); // Standardize bullet points
+            
+            return text;
+        }
+
+        function formatResponse(prompt, responseText) {
+            // Check for code blocks
+            if (responseText.includes('```')) {
+                const codeContent = responseText.replace(/```[\s\S]*?```/g, match => {
+                    const code = match.replace(/```[a-z]*\n?|\n?```/g, '');
+                    return `<pre><code>${code}</code></pre>`;
+                });
+                
+                return `
+                    <div class="ai-response">
+                        <h2><i class="fas fa-code mr-2"></i>Code Solution</h2>
+                        <p>Here's a solution for your request:</p>
+                        ${codeContent}
+                        <h2><i class="fas fa-lightbulb mr-2"></i>Explanation</h2>
+                        <p>Key points about this solution:</p>
+                        <ul>
+                            <li><strong>Approach</strong>: Provides an efficient solution</li>
+                            <li><strong>Implementation</strong>: Clean and well-structured</li>
+                            <li><strong>Usage</strong>: Ready to implement in your project</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // Check for list-like responses
+            if (responseText.split('\n').length > 5 || 
+                responseText.toLowerCase().includes('step') || 
+                responseText.toLowerCase().includes('tip') ||
+                responseText.toLowerCase().includes('1.') ||
+                responseText.toLowerCase().includes('* ') ||
+                responseText.toLowerCase().includes('- ')) {
+                return `
+                    <div class="ai-response">
+                        <h2><i class="fas fa-list-ul mr-2"></i>Detailed Response</h2>
+                        ${formatAsBulletPoints(responseText)}
+                    </div>
+                `;
+            }
+            
+            // Default formatted response
+            return `
+                <div class="ai-response">
+                    <h2><i class="fas fa-comment-dots mr-2"></i>Response</h2>
+                    <p>${responseText}</p>
+                </div>
+            `;
+        }
+
+        function formatAsBulletPoints(text) {
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            if (lines.length <= 1) return `<p>${text}</p>`;
+            
+            return `
+                <p>Here are the key points:</p>
+                <ul>
+                    ${lines.map(line => {
+                        // Clean up bullet points if they already exist
+                        const cleanedLine = line.replace(/^\s*[\d*\-+.]\s+/, '').trim();
+                        return `<li>${cleanedLine}</li>`;
+                    }).join('')}
+                </ul>
+            `;
+        }
+
+        function generateImage(prompt) {
+            // Remove "image:" prefix if present
+            const cleanPrompt = prompt.toLowerCase().startsWith('image:') 
+                ? prompt.substring(6).trim() 
+                : prompt;
+            
+            // Show image loading state
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'flex items-start space-x-3 fade-in';
+            loadingDiv.innerHTML = `
+                <div class="flex-shrink-0 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 max-w-[85%] relative">
+                    <div class="image-loading">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        Generating your image...
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(loadingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Use Pollinations AI image generation API
+            const apiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}`;
+            
+            // Create image element
+            const img = new Image();
+            img.src = apiUrl;
+            
+            img.onload = function() {
+                // Remove loading indicator
+                chatContainer.removeChild(loadingDiv);
+                
+                // Add the actual image
+                addMessageToUI('ai', apiUrl, 'image');
+
+                // Save generated image
+                const imageId = `image-${Date.now()}`;
+                generatedImages[imageId] = {
+                    id: imageId,
+                    prompt: cleanPrompt,
+                    url: apiUrl,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('generatedImages', JSON.stringify(generatedImages));
+
+                // Add AI response to current chat
+                chats[currentChatId].messages.push({
+                    sender: 'ai',
+                    content: apiUrl,
+                    type: 'image',
+                    timestamp: Date.now()
+                });
+                saveChats();
+            };
+            
+            img.onerror = function() {
+                // Remove loading indicator
+                chatContainer.removeChild(loadingDiv);
+                
+                // Show error message
+                addMessageToUI('ai', "Sorry, I couldn't generate that image. Please try a different description.", 'text');
+            };
+        }
+
+        function addMessageToUI(sender, content, type = 'text') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-enter';
+            
+            if (type === 'text') {
+                messageDiv.innerHTML = `
+                    <div class="flex items-start space-x-3 message-container">
+                        <div class="flex-shrink-0 ${sender === 'user' ? 'bg-gray-500' : 'bg-blue-500'} text-white rounded-full w-8 h-8 flex items-center justify-center">
+                            ${sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>'}
+                        </div>
+                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 max-w-[85%] relative">
+                            <button class="copy-btn absolute top-2 right-2 p-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 transition">
+                                <i class="fas fa-copy text-xs"></i>
+                            </button>
+                            ${sender === 'ai' ? content : `<p class="text-gray-800 dark:text-gray-200">${content}</p>`}
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listener for copy button
+                const copyBtn = messageDiv.querySelector('.copy-btn');
+                copyBtn.addEventListener('click', () => {
+                    const textToCopy = sender === 'ai' 
+                        ? stripHtml(content) 
+                        : content;
+                    copyToClipboard(textToCopy);
+                    showToast('Copied to clipboard!');
+                });
+            } else if (type === 'image') {
+                messageDiv.innerHTML = `
+                    <div class="flex items-start space-x-3 message-container">
+                        <div class="flex-shrink-0 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 max-w-[85%] relative">
+                            <button class="copy-btn absolute top-2 right-2 p-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 transition">
+                                <i class="fas fa-copy text-xs"></i>
+                            </button>
+                            <img src="${content}" alt="Generated image" class="rounded-lg max-w-full h-auto shadow-md transition-transform duration-300 hover:scale-105">
+                            <div class="mt-2 flex justify-end space-x-2">
+                                <button class="download-image-btn px-3 py-1 bg-blue-500 text-white text-sm rounded-full hover:bg-blue-600 transition flex items-center" data-url="${content}">
+                                    <i class="fas fa-download mr-1"></i> Download
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listener for copy button (copies image URL)
+                const copyBtn = messageDiv.querySelector('.copy-btn');
+                copyBtn.addEventListener('click', () => {
+                    copyToClipboard(content);
+                    showToast('Image URL copied!');
+                });
+                
+                // Add event listener for download button
+                const downloadBtn = messageDiv.querySelector('.download-image-btn');
+                downloadBtn.addEventListener('click', (e) => {
+                    const imageUrl = e.target.getAttribute('data-url') || 
+                                    e.target.parentElement.getAttribute('data-url');
+                    downloadImage(imageUrl);
+                });
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function createNewChat() {
+            currentChatId = `chat-${Date.now()}`;
+            chats[currentChatId] = {
+                id: currentChatId,
+                title: 'New Chat',
+                timestamp: Date.now(),
+                messages: []
+            };
+            saveChats();
+            updateChatHistoryUI();
+            
+            // Clear chat container and add welcome message
+            chatContainer.innerHTML = `
+                <div class="message-enter">
+                    <div class="flex items-start space-x-3 message-container">
+                        <div class="flex-shrink-0 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 max-w-[85%] relative">
+                            <button class="copy-btn absolute top-2 right-2 p-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 transition">
+                                <i class="fas fa-copy text-xs"></i>
+                            </button>
+                            <p class="text-gray-800 dark:text-gray-200">Hello! I'm your AI assistant. You can ask me anything or generate images by starting your prompt with "image:".</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadChat(chatId) {
+            currentChatId = chatId;
+            const chat = chats[chatId];
+            
+            // Clear chat container
+            chatContainer.innerHTML = '';
+            
+            // Add all messages from the chat
+            chat.messages.forEach(msg => {
+                addMessageToUI(msg.sender, msg.content, msg.type || 'text');
+            });
+            
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Close sidebar on mobile after selecting a chat
+            if (window.innerWidth <= 768) {
+                toggleSidebar();
+            }
+        }
+
+        function updateChatHistoryUI() {
+            chatHistory.innerHTML = '';
+            
+            // Sort chats by timestamp (newest first)
+            const sortedChats = Object.values(chats).sort((a, b) => b.timestamp - a.timestamp);
+            
+            sortedChats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.className = `p-3 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition ${currentChatId === chat.id ? 'bg-gray-100 dark:bg-gray-700' : ''}`;
+                chatItem.innerHTML = `
+                    <h3 class="font-medium text-gray-800 dark:text-gray-200 truncate">${chat.title}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">${new Date(chat.timestamp).toLocaleString()}</p>
+                `;
+                chatItem.addEventListener('click', () => loadChat(chat.id));
+                chatHistory.appendChild(chatItem);
+            });
+        }
+
+        function saveChats() {
+            localStorage.setItem('aiChats', JSON.stringify(chats));
+        }
+
+        function clearStorage() {
+            if (confirm('Are you sure you want to clear all chat history and generated content?')) {
+                localStorage.removeItem('aiChats');
+                localStorage.removeItem('generatedTexts');
+                localStorage.removeItem('generatedImages');
+                chats = {};
+                generatedTexts = {};
+                generatedImages = {};
+                currentChatId = `chat-${Date.now()}`;
+                chats[currentChatId] = {
+                    id: currentChatId,
+                    title: 'New Chat',
+                    timestamp: Date.now(),
+                    messages: []
+                };
+                updateChatHistoryUI();
+                createNewChat();
+            }
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            if (mode === 'text') {
+                textModeBtn.classList.add('bg-red-800', 'text-white');
+                textModeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
+                imageModeBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
+                imageModeBtn.classList.remove('bg-blue-500', 'text-white');
+                userInput.placeholder = "Type your message...";
+            } else {
+                imageModeBtn.classList.add('bg-red-800', 'animate-pulse','text-white');
+                imageModeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
+                textModeBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
+                textModeBtn.classList.remove('bg-blue-500', 'text-white');
+                userInput.placeholder = "Describe the image you want to generate...";
+            }
+        }
+
+        function openDrawer() {
+            downloadDrawer.classList.remove('translate-x-full');
+            updateDownloadsUI();
+        }
+
+        function closeDrawer() {
+            downloadDrawer.classList.add('translate-x-full');
+        }
+
+        function updateDownloadsUI() {
+            // Update text downloads section
+            const hasTexts = Object.keys(generatedTexts).length > 0;
+            downloadTextBtn.disabled = !hasTexts;
+            copyAllTextBtn.disabled = !hasTexts;
+            
+            // Update image downloads section
+            imageDownloads.innerHTML = '';
+            
+            // Sort images by timestamp (newest first)
+            const sortedImages = Object.values(generatedImages).sort((a, b) => b.timestamp - a.timestamp);
+            
+            sortedImages.forEach(img => {
+                const imgItem = document.createElement('div');
+                imgItem.className = 'relative group';
+                imgItem.innerHTML = `
+                    <img src="${img.url}" alt="${img.prompt}" class="rounded-lg w-full h-24 object-cover transition-transform duration-300 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-lg">
+                        <button class="download-image-btn px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition" data-url="${img.url}">
+                            <i class="fas fa-download mr-1"></i> Download
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-800 dark:text-gray-200 mt-1 truncate" title="${img.prompt}">${img.prompt}</p>
+                `;
+                
+                const downloadBtn = imgItem.querySelector('.download-image-btn');
+                downloadBtn.addEventListener('click', () => downloadImage(img.url));
+                
+                imageDownloads.appendChild(imgItem);
+            });
+        }
+
+        function downloadImage(imageUrl) {
+            // Create a temporary anchor element
+            const a = document.createElement('a');
+            a.href = imageUrl;
+            a.download = `ai-image-${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('Download started!');
+        }
+
+        function downloadTextAsTXT() {
+            let allText = "Generated AI Text Content\n\n";
+            Object.values(generatedTexts).forEach(text => {
+                allText += `Prompt: ${text.prompt}\n`;
+                allText += `Response: ${stripHtml(text.content)}\n\n`;
+                allText += '―'.repeat(50) + '\n\n';
+            });
+            
+            const blob = new Blob([allText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ai-text-content-${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Download started!');
+        }
+
+        function copyAllText() {
+            let allText = "";
+            Object.values(generatedTexts).forEach(text => {
+                allText += `Prompt: ${text.prompt}\n`;
+                allText += `Response: ${stripHtml(text.content)}\n\n`;
+                allText += '―'.repeat(50) + '\n\n';
+            });
+            
+            copyToClipboard(allText);
+            showToast('All text copied!');
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                console.log('Text copied to clipboard');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                // Fallback for browsers that don't support clipboard API
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            });
+        }
+
+        function stripHtml(html) {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            return doc.body.textContent || "";
+        }
+
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toast.classList.remove('translate-y-16');
+            setTimeout(() => {
+                toast.classList.add('translate-y-16');
+            }, 3000);
+        }
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>

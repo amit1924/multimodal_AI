@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundForge | AI Audio Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            min-height: 100vh;
+        }
+        
+        .waveform {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            background-size: 400% 400%;
+            animation: gradient 8s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .voice-option:hover {
+            transform: scale(1.05);
+            border-color: #3b82f6;
+        }
+        
+        .history-item-enter {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        .history-item-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 300ms ease;
+        }
+        .history-item-exit {
+            opacity: 1;
+        }
+        .history-item-exit-active {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 300ms ease;
+        }
+    </style>
+</head>
+<body class="text-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-12 fade-in">
+            <div class="flex items-center mb-4 md:mb-0">
+                <i class="fas fa-wave-square text-4xl text-blue-400 mr-3"></i>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                    SoundForge
+                </h1>
+            </div>
+            <div class="flex space-x-4">
+                <button class="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 transition-all duration-300 flex items-center">
+                    <i class="fas fa-user mr-2"></i> Sign In
+                </button>
+               
+                
+                    <a href="index.html"  class="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 transition-all duration-300 flex items-center">   <i class="fas fa-home mr-2"></i> Home</a>
+                 
+                
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Generator Panel -->
+            <div class="lg:col-span-2 bg-gray-800/50 rounded-2xl p-6 shadow-xl border border-gray-700 transition-all duration-300 card-hover">
+                <h2 class="text-2xl font-semibold mb-6 flex items-center">
+                    <i class="fas fa-magic mr-3 text-blue-400"></i> AI Audio Generator
+                </h2>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Enter your text prompt</label>
+                    <div class="relative">
+                        <textarea id="promptInput" rows="4" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300" placeholder="Type what you want to generate as audio..."></textarea>
+                        <div class="absolute bottom-3 right-3 flex space-x-2">
+                            <button id="clearBtn" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-600/50 transition-all">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Select Voice</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <button data-voice="alloy" class="voice-option py-2 px-3 rounded-lg border border-gray-600 bg-gray-700/30 flex flex-col items-center transition-all duration-300">
+                            <i class="fas fa-user text-blue-400 mb-1"></i>
+                            <span>Alloy</span>
+                        </button>
+                        <button data-voice="echo" class="voice-option py-2 px-3 rounded-lg border border-gray-600 bg-gray-700/30 flex flex-col items-center transition-all duration-300">
+                            <i class="fas fa-user-tie text-purple-400 mb-1"></i>
+                            <span>Echo</span>
+                        </button>
+                        <button data-voice="fable" class="voice-option py-2 px-3 rounded-lg border border-gray-600 bg-gray-700/30 flex flex-col items-center transition-all duration-300">
+                            <i class="fas fa-robot text-pink-400 mb-1"></i>
+                            <span>Fable</span>
+                        </button>
+                        <button data-voice="onyx" class="voice-option py-2 px-3 rounded-lg border border-gray-600 bg-gray-700/30 flex flex-col items-center transition-all duration-300">
+                            <i class="fas fa-user-ninja text-indigo-400 mb-1"></i>
+                            <span>Onyx</span>
+                        </button>
+                        <button data-voice="nova" class="voice-option py-2 px-3 rounded-lg border border-gray-600 bg-gray-700/30 flex flex-col items-center transition-all duration-300">
+                            <i class="fas fa-user-astronaut text-teal-400 mb-1"></i>
+                            <span>Nova</span>
+                        </button>
+                        <button data-voice="shimmer" class="voice-option py-2 px-3 rounded-lg border border-gray-600 bg-gray-700/30 flex flex-col items-center transition-all duration-300">
+                            <i class="fas fa-fairy text-yellow-400 mb-1"></i>
+                            <span>Shimmer</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center flex-wrap gap-4">
+                    <div class="flex space-x-3">
+                        <button id="sampleBtn" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-all duration-300 flex items-center">
+                            <i class="fas fa-headphones mr-2"></i> Samples
+                        </button>
+                        <button id="historyBtn" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-all duration-300 flex items-center">
+                            <i class="fas fa-history mr-2"></i> History
+                        </button>
+                    </div>
+                    <button id="generateBtn" class="px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 font-medium flex items-center pulse-animation" even>
+                        <i class="fas fa-bolt mr-2"></i> Generate Audio
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Output Panel -->
+            <div class="bg-gray-800/50 rounded-2xl p-6 shadow-xl border border-gray-700 transition-all duration-300 card-hover">
+                <h2 class="text-2xl font-semibold mb-6 flex items-center">
+                    <i class="fas fa-music mr-3 text-purple-400"></i> Output
+                </h2>
+                
+                <div id="outputContainer" class="flex flex-col items-center justify-center min-h-[200px] rounded-xl bg-gray-900/30 border border-dashed border-gray-600 mb-6 transition-all duration-300">
+                    <i class="fas fa-wave-square text-5xl text-gray-500 mb-3"></i>
+                    <p class="text-gray-400 text-center">Your generated audio will appear here</p>
+                </div>
+                
+                <div id="audioControls" class="hidden">
+                    <div class="waveform h-20 mb-4 rounded-lg overflow-hidden"></div>
+                    <div class="flex justify-between items-center mb-4">
+                        <span id="currentTime" class="text-sm text-gray-400">0:00</span>
+                        <span id="duration" class="text-sm text-gray-400">0:00</span>
+                    </div>
+                    <div class="flex items-center justify-center space-x-4 mb-6">
+                        <button id="playBtn" class="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition-all duration-300">
+                            <i class="fas fa-play text-lg"></i>
+                        </button>
+                        <button id="pauseBtn" class="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-all duration-300">
+                            <i class="fas fa-pause text-lg"></i>
+                        </button>
+                        <button id="stopBtn" class="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 flex items-center justify-center transition-all duration-300">
+                            <i class="fas fa-stop text-lg"></i>
+                        </button>
+                    </div>
+                    <div class="flex justify-between">
+                        <button id="downloadBtn" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 transition-all duration-300 flex items-center">
+                            <i class="fas fa-download mr-2"></i> Download
+                        </button>
+                        <button id="shareBtn" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition-all duration-300 flex items-center">
+                            <i class="fas fa-share-alt mr-2"></i> Share
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="loadingIndicator" class="hidden flex flex-col items-center justify-center py-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                    <p class="text-gray-300">Generating your audio...</p>
+                    <p class="text-sm text-gray-500">This may take a few moments</p>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Samples Modal -->
+        <div id="samplesModal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center hidden">
+            <div class="bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold">Sample Audio Prompts</h3>
+                        <button id="closeSamplesModal" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="sample-card p-4 rounded-lg bg-gray-700/50 border border-gray-600 hover:bg-gray-700 transition-all duration-300 cursor-pointer">
+                            <h4 class="font-medium mb-2">Welcome Message</h4>
+                            <p class="text-sm text-gray-300 mb-3">"Welcome to our platform. We're excited to have you here. How can we assist you today?"</p>
+                            <button class="text-sm text-blue-400 hover:text-blue-300 flex items-center">
+                                <i class="fas fa-play-circle mr-1"></i> Play Sample
+                            </button>
+                        </div>
+                        <div class="sample-card p-4 rounded-lg bg-gray-700/50 border border-gray-600 hover:bg-gray-700 transition-all duration-300 cursor-pointer">
+                            <h4 class="font-medium mb-2">Podcast Intro</h4>
+                            <p class="text-sm text-gray-300 mb-3">"Welcome to Tech Today, the podcast where we explore the latest innovations shaping our future. I'm your host, Alex."</p>
+                            <button class="text-sm text-blue-400 hover:text-blue-300 flex items-center">
+                                <i class="fas fa-play-circle mr-1"></i> Play Sample
+                            </button>
+                        </div>
+                        <div class="sample-card p-4 rounded-lg bg-gray-700/50 border border-gray-600 hover:bg-gray-700 transition-all duration-300 cursor-pointer">
+                            <h4 class="font-medium mb-2">Storytelling</h4>
+                            <p class="text-sm text-gray-300 mb-3">"Once upon a time, in a land far away, there lived a brave knight who embarked on a quest to find the lost treasure of Eldoria."</p>
+                            <button class="text-sm text-blue-400 hover:text-blue-300 flex items-center">
+                                <i class="fas fa-play-circle mr-1"></i> Play Sample
+                            </button>
+                        </div>
+                        <div class="sample-card p-4 rounded-lg bg-gray-700/50 border border-gray-600 hover:bg-gray-700 transition-all duration-300 cursor-pointer">
+                            <h4 class="font-medium mb-2">Product Ad</h4>
+                            <p class="text-sm text-gray-300 mb-3">"Introducing the all-new Quantum X headphones. With crystal clear sound and 40-hour battery life, your music has never sounded better."</p>
+                            <button class="text-sm text-blue-400 hover:text-blue-300 flex items-center">
+                                <i class="fas fa-play-circle mr-1"></i> Play Sample
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- History Modal -->
+        <div id="historyModal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center hidden">
+            <div class="bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold">Your Generation History</h3>
+                        <button id="closeHistoryModal" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="mb-4">
+                        <div class="relative">
+                            <input id="historySearch" type="text" placeholder="Search history..." class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <div id="historyList" class="grid grid-cols-1 gap-3">
+                        <!-- History items will be dynamically inserted here -->
+                    </div>
+                    <div id="emptyHistory" class="text-center py-8 text-gray-500">
+                        <i class="fas fa-history text-4xl mb-3"></i>
+                        <p>No history yet</p>
+                        <p class="text-sm mt-1">Your generated audio will appear here</p>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button id="clearHistoryBtn" class="px-4 py-2 rounded-lg bg-red-600/30 hover:bg-red-600/50 text-red-400 transition-all duration-300 flex items-center">
+                            <i class="fas fa-trash mr-2"></i> Clear All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="mt-16 pt-8 border-t border-gray-700/50 text-center text-gray-400 text-sm">
+            <div class="flex justify-center space-x-6 mb-4">
+                <a href="#" class="hover:text-white transition-all duration-300"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="hover:text-white transition-all duration-300"><i class="fab fa-github"></i></a>
+                <a href="#" class="hover:text-white transition-all duration-300"><i class="fab fa-discord"></i></a>
+                <a href="#" class="hover:text-white transition-all duration-300"><i class="fas fa-envelope"></i></a>
+            </div>
+            <p>© 2023 SoundForge AI. All rights reserved.</p>
+            <p class="mt-1">Powered by OpenAI's audio generation technology</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const promptInput = document.getElementById('promptInput');
+            const generateBtn = document.getElementById('generateBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const sampleBtn = document.getElementById('sampleBtn');
+            const historyBtn = document.getElementById('historyBtn');
+            const outputContainer = document.getElementById('outputContainer');
+            const audioControls = document.getElementById('audioControls');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const samplesModal = document.getElementById('samplesModal');
+            const historyModal = document.getElementById('historyModal');
+            const closeSamplesModal = document.getElementById('closeSamplesModal');
+            const closeHistoryModal = document.getElementById('closeHistoryModal');
+            const playBtn = document.getElementById('playBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const shareBtn = document.getElementById('shareBtn');
+            const currentTime = document.getElementById('currentTime');
+            const duration = document.getElementById('duration');
+            const historyList = document.getElementById('historyList');
+            const emptyHistory = document.getElementById('emptyHistory');
+            const historySearch = document.getElementById('historySearch');
+            const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+            
+            // Audio element
+            let audioElement = null;
+            let selectedVoice = 'alloy';
+            let currentAudioUrl = '';
+            let currentAudioTitle = '';
+            
+            // Initialize history from localStorage
+            let history = JSON.parse(localStorage.getItem('audioHistory')) || [];
+            renderHistory();
+            
+            // Select voice
+            document.querySelectorAll('.voice-option').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.voice-option').forEach(b => {
+                        b.classList.remove('border-blue-500', 'bg-gray-700');
+                        b.classList.add('border-gray-600', 'bg-gray-700/30');
+                    });
+                    this.classList.add('border-blue-500', 'bg-gray-700');
+                    this.classList.remove('border-gray-600', 'bg-gray-700/30');
+                    selectedVoice = this.getAttribute('data-voice');
+                });
+            });
+            
+            // Clear input
+            clearBtn.addEventListener('click', function() {
+                promptInput.value = '';
+            });
+            
+            // Sample modal
+            sampleBtn.addEventListener('click', function() {
+                samplesModal.classList.remove('hidden');
+                samplesModal.classList.add('flex');
+            });
+            
+            closeSamplesModal.addEventListener('click', function() {
+                samplesModal.classList.add('hidden');
+                samplesModal.classList.remove('flex');
+            });
+            
+            // History modal
+            historyBtn.addEventListener('click', function() {
+                historyModal.classList.remove('hidden');
+                historyModal.classList.add('flex');
+                renderHistory();
+            });
+            
+            closeHistoryModal.addEventListener('click', function() {
+                historyModal.classList.add('hidden');
+                historyModal.classList.remove('flex');
+            });
+            
+            // Clear history
+            clearHistoryBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all history?')) {
+                    history = [];
+                    localStorage.setItem('audioHistory', JSON.stringify(history));
+                    renderHistory();
+                }
+            });
+            
+            // Search history
+            historySearch.addEventListener('input', function() {
+                renderHistory(this.value.toLowerCase());
+            });
+            
+            // Generate audio
+           // Trigger button click when Enter key is pressed
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+        event.preventDefault(); 
+        generateBtn.click();
+    }
+});
+
+// Button click event
+generateBtn.addEventListener('click', function() {
+    const prompt = promptInput.value.trim();
+    
+    if (!prompt) {
+        alert('Please enter a text prompt');
+        return;
+    }
+    
+    // Show loading state
+    outputContainer.classList.add('hidden');
+    audioControls.classList.add('hidden');
+    loadingIndicator.classList.remove('hidden');
+    loadingIndicator.classList.add('flex');
+    
+    // Disable generate button during processing
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating...';
+    
+    // Encode the prompt for URL
+    const encodedPrompt = encodeURIComponent(prompt);
+    
+    // Create audio URL
+    currentAudioUrl = `https://text.pollinations.ai/${encodedPrompt}?model=openai-audio&voice=${selectedVoice}`;
+    currentAudioTitle = prompt.length > 30 ? prompt.substring(0, 30) + '...' : prompt;
+    
+    // Simulate API call with setTimeout
+    setTimeout(function() {
+        // Hide loading indicator
+        loadingIndicator.classList.add('hidden');
+        loadingIndicator.classList.remove('flex');
+        
+        // Create audio element
+        if (audioElement) {
+            audioElement.pause();
+            audioElement = null;
+        }
+        
+        audioElement = new Audio(currentAudioUrl);
+        
+        // Set up audio events
+        audioElement.addEventListener('loadedmetadata', function() {
+            const mins = Math.floor(audioElement.duration / 60);
+            const secs = Math.floor(audioElement.duration % 60);
+            duration.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        });
+        
+        audioElement.addEventListener('timeupdate', function() {
+            const mins = Math.floor(audioElement.currentTime / 60);
+            const secs = Math.floor(audioElement.currentTime % 60);
+            currentTime.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        });
+        
+        audioElement.addEventListener('ended', function() {
+            playBtn.innerHTML = '<i class="fas fa-play text-lg"></i>';
+        });
+        
+        // Show audio controls
+        outputContainer.classList.add('hidden');
+        audioControls.classList.remove('hidden');
+        
+        // Reset generate button
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-bolt mr-2"></i> Generate Audio';
+        
+        // Add to history
+        addToHistory(currentAudioTitle, currentAudioUrl, selectedVoice);
+    }, 3000); // Simulate 3 second delay for generation
+});
+ playBtn.addEventListener('click', function() {
+                if (audioElement) {
+                    audioElement.play();
+                    playBtn.innerHTML = '<i class="fas fa-pause text-lg"></i>';
+                }
+            });
+            
+            pauseBtn.addEventListener('click', function() {
+                if (audioElement) {
+                    audioElement.pause();
+                    playBtn.innerHTML = '<i class="fas fa-play text-lg"></i>';
+                }
+            });
+            
+            stopBtn.addEventListener('click', function() {
+                if (audioElement) {
+                    audioElement.pause();
+                    audioElement.currentTime = 0;
+                    playBtn.innerHTML = '<i class="fas fa-play text-lg"></i>';
+                }
+            });
+            
+            // Download audio
+            downloadBtn.addEventListener('click', function() {
+                if (currentAudioUrl) {
+                    // Create a temporary anchor element
+                    const a = document.createElement('a');
+                    a.href = currentAudioUrl;
+                    
+                    // Create a filename from the title and current date
+                    const date = new Date();
+                    const formattedDate = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                    const filename = `soundforge-${formattedDate}-${currentAudioTitle.substring(0, 20).replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp3`;
+                    
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            });
+            
+            shareBtn.addEventListener('click', function() {
+                if (currentAudioUrl) {
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'SoundForge Audio',
+                            text: `Check out this audio I generated: "${currentAudioTitle}"`,
+                            url: currentAudioUrl
+                        }).catch(err => {
+                            console.log('Error sharing:', err);
+                            copyToClipboard(currentAudioUrl);
+                        });
+                    } else {
+                        copyToClipboard(currentAudioUrl);
+                    }
+                }
+            });
+            
+            // Sample click handler
+            document.querySelectorAll('.sample-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const sampleText = this.querySelector('p').textContent;
+                    promptInput.value = sampleText;
+                    samplesModal.classList.add('hidden');
+                    samplesModal.classList.remove('flex');
+                });
+            });
+            
+            // Helper functions
+            function addToHistory(title, url, voice) {
+                const newItem = {
+                    id: Date.now(),
+                    title: title,
+                    url: url,
+                    voice: voice,
+                    date: new Date().toISOString()
+                };
+                
+                // Add to beginning of array (newest first)
+                history.unshift(newItem);
+                
+                // Limit to 50 items
+                if (history.length > 50) {
+                    history = history.slice(0, 50);
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('audioHistory', JSON.stringify(history));
+                
+                // Update UI if history modal is open
+                if (!historyModal.classList.contains('hidden')) {
+                    renderHistory();
+                }
+            }
+            
+            function renderHistory(searchTerm = '') {
+                const filteredHistory = searchTerm 
+                    ? history.filter(item => 
+                        item.title.toLowerCase().includes(searchTerm) || 
+                        item.voice.toLowerCase().includes(searchTerm))
+                    : history;
+                
+                if (filteredHistory.length === 0) {
+                    emptyHistory.classList.remove('hidden');
+                    historyList.innerHTML = '';
+                    return;
+                }
+                
+                emptyHistory.classList.add('hidden');
+                historyList.innerHTML = '';
+                
+                filteredHistory.forEach(item => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item p-3 rounded-lg bg-gray-700/50 border border-gray-600 hover:bg-gray-700 transition-all duration-300 cursor-pointer flex justify-between items-center';
+                    historyItem.dataset.id = item.id;
+                    
+                    const date = new Date(item.date);
+                    const formattedDate = formatDate(date);
+                    
+                    historyItem.innerHTML = `
+                        <div>
+                            <h4 class="font-medium text-sm mb-1">${item.title}</h4>
+                            <p class="text-xs text-gray-400">${formattedDate} • ${item.voice.charAt(0).toUpperCase() + item.voice.slice(1)}</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="play-history p-2 text-blue-400 hover:text-blue-300 rounded-full hover:bg-gray-600/50">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="download-history p-2 text-green-400 hover:text-green-300 rounded-full hover:bg-gray-600/50">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="delete-history p-2 text-red-400 hover:text-red-300 rounded-full hover:bg-gray-600/50">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    historyList.appendChild(historyItem);
+                    
+                    // Add event listeners to the new buttons
+                    historyItem.querySelector('.play-history').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        playHistoryItem(item);
+                    });
+                    
+                    historyItem.querySelector('.download-history').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        downloadHistoryItem(item);
+                    });
+                    
+                    historyItem.querySelector('.delete-history').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteHistoryItem(item.id);
+                    });
+                    
+                    historyItem.addEventListener('click', () => {
+                        promptInput.value = item.title;
+                        historyModal.classList.add('hidden');
+                        historyModal.classList.remove('flex');
+                    });
+                });
+            }
+            
+            function playHistoryItem(item) {
+                if (audioElement) {
+                    audioElement.pause();
+                    audioElement = null;
+                }
+                
+                currentAudioUrl = item.url;
+                currentAudioTitle = item.title;
+                
+                audioElement = new Audio(item.url);
+                audioElement.play();
+                
+                // Update UI
+                outputContainer.classList.add('hidden');
+                audioControls.classList.remove('hidden');
+                playBtn.innerHTML = '<i class="fas fa-pause text-lg"></i>';
+                
+                // Set up audio events
+                audioElement.addEventListener('loadedmetadata', function() {
+                    const mins = Math.floor(audioElement.duration / 60);
+                    const secs = Math.floor(audioElement.duration % 60);
+                    duration.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                });
+                
+                audioElement.addEventListener('timeupdate', function() {
+                    const mins = Math.floor(audioElement.currentTime / 60);
+                    const secs = Math.floor(audioElement.currentTime % 60);
+                    currentTime.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                });
+                
+                audioElement.addEventListener('ended', function() {
+                    playBtn.innerHTML = '<i class="fas fa-play text-lg"></i>';
+                });
+            }
+            
+            function downloadHistoryItem(item) {
+                const a = document.createElement('a');
+                a.href = item.url;
+                
+                // Create a filename from the title and date
+                const date = new Date(item.date);
+                const formattedDate = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                const filename = `soundforge-${formattedDate}-${item.title.substring(0, 20).replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp3`;
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+            
+            function deleteHistoryItem(id) {
+                history = history.filter(item => item.id !== id);
+                localStorage.setItem('audioHistory', JSON.stringify(history));
+                renderHistory(historySearch.value.toLowerCase());
+            }
+            
+            function formatDate(date) {
+                const now = new Date();
+                const diffInSeconds = Math.floor((now - date) / 1000);
+                
+                if (diffInSeconds < 60) {
+                    return `${diffInSeconds} seconds ago`;
+                }
+                
+                const diffInMinutes = Math.floor(diffInSeconds / 60);
+                if (diffInMinutes < 60) {
+                    return `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
+                }
+                
+                const diffInHours = Math.floor(diffInMinutes / 60);
+                if (diffInHours < 24) {
+                    return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+                }
+                
+                const diffInDays = Math.floor(diffInHours / 24);
+                if (diffInDays < 7) {
+                    return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+                }
+                
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+            
+            function copyToClipboard(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                alert('Link copied to clipboard!');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jarvis AI Assistant</title>
+    <title>MultiModal AI Assistant</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -96,7 +96,7 @@
       
     </style>
 </head>
-<body class="gradient-bg text-gray-100 min-h-screen flex transition-colors duration-500 font-sans">
+<body class="gradient-bg text-gray-100 h-1 md:min-h-screen flex transition-colors duration-500 font-sans">
     <!-- Sidebar Overlay -->
     <div id="overlay" class="overlay md:hidden"></div>
     
@@ -122,7 +122,7 @@
             </a>
             
             <!-- Other pages - using relative paths without leading slash -->
-            <a href="chatAI.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
+            <a href="bestAI.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
                 <i class="fas fa-comment-alt text-lg w-6 text-center"></i>
                 <span class="nav-text">Chat</span>
             </a>
@@ -130,9 +130,10 @@
                 <i class="fas fa-image text-lg w-6 text-center"></i>
                 <span class="nav-text">Generate Image</span>
             </a>
-            <a href="imageGenerator.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
-                <i class="fa-solid fa-photo-film text-lg w-6 text-center"></i>
-                <span class="nav-text">Image Generator</span>
+            <a href="aiAudio.html" class="nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
+                
+                <i class="fa-solid fa-headphones text-lg w-6 text-center"></i>
+                <span class="nav-text">AI Audio</span>
             </a>
         </nav>
     </aside>
@@ -166,6 +167,7 @@
                 </div>
                 
                 <div class="flex items-center space-x-3">
+                 
                     <button id="clear-chat-btn" class="text-gray-400 hover:text-red-400 transition-colors focus:outline-none" title="Clear Chat">
                         <i class="fas fa-trash-alt"></i>
                     </button>
