@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced AI Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --light: #f8fafc;
+        }
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior-y: contain;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        /* Chat container height */
+        .chat-container {
+            height: calc(100vh - 140px);
+        }
+        
+        @media (min-width: 768px) {
+            .chat-container {
+                height: calc(100vh - 160px);
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+        
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        /* Message styling */
+        .message-enter {
+            animation: messageEnter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+        }
+        
+        @keyframes messageEnter {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        /* Typing indicator */
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+            margin-right: 4px;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        /* Shimmer effect */
+        .shimmer {
+            background: linear-gradient(90deg, #f3f4f6, #e5e7eb, #f3f4f6);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite linear;
+        }
+        
+        .dark .shimmer {
+            background: linear-gradient(90deg, #334155, #475569, #334155);
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        /* Sidebar transitions */
+        .sidebar {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .sidebar-overlay {
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Image loading */
+        .image-loading {
+            background: linear-gradient(90deg, #f1f5f9, #e2e8f0, #f1f5f9);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite linear;
+        }
+        
+        .dark .image-loading {
+            background: linear-gradient(90deg, #1e293b, #334155, #1e293b);
+        }
+        
+        /* Markdown-like formatting */
+        .ai-message h2, .ai-message h3 {
+            font-weight: 600;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+        }
+        
+        .dark .ai-message h2, .dark .ai-message h3 {
+            color: var(--primary);
+        }
+        
+        .ai-message p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        .ai-message ul, .ai-message ol {
+            margin-left: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        
+        .ai-message li {
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .ai-message ul li::before {
+            content: "•";
+            position: absolute;
+            left: -1rem;
+            color: var(--primary);
+        }
+        
+        .ai-message code {
+            font-family: 'Courier New', monospace;
+            background-color: rgba(99, 102, 241, 0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            color: var(--primary);
+            font-size: 0.9em;
+        }
+        
+        .ai-message pre {
+            background-color: rgba(15, 23, 42, 0.8);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .dark .ai-message pre {
+            background-color: rgba(15, 23, 42, 0.8);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .chat-container {
+                height: calc(100vh - 120px);
+            
+            }
+            
+            .input-container {
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-top: 0.5rem;
+            }
+            
+            .send-btn {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .message-input {
+                min-height: 40px;
+                padding: 0.5rem 0.75rem;
+            }
+            
+            .header {
+                padding: 0.5rem 1rem;
+            }
+            
+            .logo-text {
+                font-size: 1rem;
+            }
+            
+            .mode-btn {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .message-avatar {
+                width: 28px;
+                height: 28px;
+                font-size: 0.75rem;
+            }
+            
+            .message-content {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+            }
+            
+            .sidebar {
+                width: 280px;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .chat-container {
+                height: calc(100vh - 110px);
+            }
+            
+            .message-input {
+                font-size: 0.9rem;
+            }
+            
+            .sidebar {
+                width: 260px;
+            }
+        }
+        
+        /* Safe area for notched devices */
+        @supports(padding: max(0px)) {
+            .safe-area-bottom {
+                padding-bottom: max(12px, env(safe-area-inset-bottom));
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+    <!-- Mobile sidebar overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none sidebar-overlay"></div>
+    
+    <div class="flex flex-col h-screen w-full">
+        <!-- Header -->
+        <header class="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 px-4 py-2 header">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <!-- Mobile menu button -->
+                    <button id="menuButton" class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
+                    
+                    <!-- Logo -->
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white float">
+                            <i class="fas fa-robot text-sm"></i>
+                        </div>
+                        <h1 class="text-lg font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent logo-text">AI Assistant</h1>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-1">
+                    <!-- Theme toggle -->
+                    <a id="themeToggle" href="index.html" class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <i class="fas fa-home"></i>
+                      
+                    </a>
+                    
+                    <!-- Clear chat -->
+                    <button id="clearChat" class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    
+                    <!-- New chat (desktop) -->
+                    <button id="newChat" class="hidden md:flex items-center space-x-1 px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition text-sm">
+                        <i class="fas fa-plus"></i>
+                        <span>New Chat</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main content -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Sidebar - Chat history -->
+            <aside id="sidebar" class="fixed md:relative inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform -translate-x-full md:translate-x-0 sidebar">
+                <div class="flex flex-col h-full">
+                    <!-- Sidebar header -->
+                    <div class="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-lg font-semibold">Chat History</h2>
+                        <button id="closeSidebar" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 md:hidden">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Chat list -->
+                    <div id="chatList" class="flex-1 overflow-y-auto p-2 space-y-1">
+                        <!-- Chat items will be inserted here -->
+                    </div>
+                    
+                    <!-- Sidebar footer -->
+                    <div class="p-3 border-t border-gray-200 dark:border-gray-700 safe-area-bottom">
+                        <button id="newChatMobile" class="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition text-sm">
+                            <i class="fas fa-plus"></i>
+                            <span>New Chat</span>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Chat area -->
+            <main class="flex-1 flex flex-col overflow-hidden">
+                <!-- Messages container -->
+                <div id="chatContainer" class="chat-container overflow-y-auto p-3 space-y-3">
+                    <!-- Welcome message -->
+                    <div class="message-enter">
+                        <div class="flex items-start gap-2">
+                            <div class="flex-shrink-0 w-7 h-7 rounded-lg bg-indigo-500 text-white flex items-center justify-center message-avatar">
+                                <i class="fas fa-robot text-xs"></i>
+                            </div>
+                            <div class="bg-gray-100 dark:bg-gray-800 rounded-xl p-3 max-w-[calc(100%-50px)] lg:max-w-[80%] relative message-content">
+                                <button class="absolute top-1.5 right-1.5 p-1 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition opacity-0 group-hover:opacity-100">
+                                    <i class="fas fa-copy text-xs"></i>
+                                </button>
+                                <p class="text-sm">Hello! I'm your AI assistant. Ask me anything or say "image:" to generate images.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Input area -->
+                <div class="input-container border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-3 safe-area-bottom">
+                    <!-- Mode selector -->
+                    <div class="flex items-center justify-center space-x-2 mb-2">
+                        <button id="textMode" class="mode-btn px-2 py-1 rounded-full bg-indigo-500 text-white text-xs font-medium transition">
+                            <i class="fas fa-comment-alt mr-1"></i> Text
+                        </button>
+                        <button id="imageMode" class="mode-btn px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium transition">
+                            <i class="fas fa-image mr-1"></i> Image
+                        </button>
+                    </div>
+                    
+                    <!-- Input field -->
+                    <div class="flex items-end gap-2">
+                        <div class="flex-1 relative">
+                            <textarea id="messageInput" rows="1" placeholder="Type your message..." 
+                                class="w-full px-3 py-2 pr-10 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition message-input"
+                                style="min-height: 40px; max-height: 120px;"></textarea>
+                            <button id="sendButton" class="absolute right-2 bottom-2 p-1 text-gray-500 dark:text-gray-400 hover:text-indigo-500 transition">
+                                <i class="fas fa-paper-plane text-base"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Toast notification -->
+    <div id="toast" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 translate-y-16 bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 transition-transform duration-300 z-50 text-sm">
+        <i class="fas fa-check-circle text-green-400"></i>
+        <span id="toastMessage">Copied to clipboard!</span>
+    </div>
+
+    <script>
+        // DOM Elements
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatList = document.getElementById('chatList');
+        const newChatBtn = document.getElementById('newChat');
+        const newChatMobileBtn = document.getElementById('newChatMobile');
+        const clearChatBtn = document.getElementById('clearChat');
+        const themeToggle = document.getElementById('themeToggle');
+        const textModeBtn = document.getElementById('textMode');
+        const imageModeBtn = document.getElementById('imageMode');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const menuButton = document.getElementById('menuButton');
+        const sidebar = document.getElementById('sidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        
+        // State
+        let currentMode = 'text';
+        let currentChatId = `chat-${Date.now()}`;
+        let chats = JSON.parse(localStorage.getItem('aiChats')) || {};
+        let generatedTexts = JSON.parse(localStorage.getItem('generatedTexts')) || {};
+        let generatedImages = JSON.parse(localStorage.getItem('generatedImages')) || {};
+        let isMobileSidebarOpen = false;
+        
+        // Initialize
+        function init() {
+            // Load theme preference
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            
+            // Load chat history
+            updateChatList();
+            
+            // Create a new chat if none exists
+            if (!chats[currentChatId]) {
+                createNewChat();
+            } else {
+                loadChat(currentChatId);
+            }
+            
+            // Auto-resize textarea
+            setupTextareaAutoResize();
+            
+            // Set initial mode
+            setMode(currentMode);
+            
+            // Handle window resize
+            window.addEventListener('resize', handleResize);
+        }
+        
+        // Event listeners
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        newChatBtn.addEventListener('click', createNewChat);
+        newChatMobileBtn.addEventListener('click', createNewChat);
+        clearChatBtn.addEventListener('click', clearChatHistory);
+        themeToggle.addEventListener('click', toggleTheme);
+        textModeBtn.addEventListener('click', () => setMode('text'));
+        imageModeBtn.addEventListener('click', () => setMode('image'));
+        menuButton.addEventListener('click', toggleMobileSidebar);
+      
+        closeSidebarBtn.addEventListener('click', toggleMobileSidebar);
+        sidebarOverlay.addEventListener('click', toggleMobileSidebar);
+        
+        // Functions
+        function setupTextareaAutoResize() {
+            messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+        
+        function handleResize() {
+            // Close mobile sidebar if window is resized to desktop size
+            if (window.innerWidth >= 768 && isMobileSidebarOpen) {
+                toggleMobileSidebar();
+            }
+        }
+        
+        function toggleMobileSidebar() {
+            isMobileSidebarOpen = !isMobileSidebarOpen;
+            
+            if (isMobileSidebarOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('opacity-0', 'pointer-events-none');
+                document.body.style.overflow = '';
+            }
+        }
+        
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Add user message to UI
+            addMessage('user', message);
+            
+            // Add to current chat
+            if (!chats[currentChatId]) {
+                createNewChat();
+            }
+            
+            chats[currentChatId].messages.push({
+                sender: 'user',
+                content: message,
+                timestamp: Date.now()
+            });
+            
+            // Update chat title if first message
+            if (chats[currentChatId].messages.length === 1) {
+                chats[currentChatId].title = message.length > 30 ? 
+                    message.substring(0, 30) + '...' : message;
+                updateChatList();
+            }
+            
+            saveChats();
+            
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            // Show typing indicator
+            const typingId = `typing-${Date.now()}`;
+            showTypingIndicator(typingId);
+            
+            // Generate response
+            setTimeout(() => {
+                removeTypingIndicator(typingId);
+                
+                if (currentMode === 'image' || message.toLowerCase().startsWith('image:')) {
+                    generateImage(message);
+                } else {
+                    generateText(message);
+                }
+            }, 1000);
+        }
+        
+        function showTypingIndicator(id) {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = id;
+            typingDiv.className = 'flex items-start gap-2 fade-in';
+            typingDiv.innerHTML = `
+                <div class="flex-shrink-0 w-7 h-7 rounded-lg bg-indigo-500 text-white flex items-center justify-center message-avatar">
+                    <i class="fas fa-robot text-xs"></i>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-800 rounded-xl p-3 max-w-[calc(100%-50px)] lg:max-w-[80%] message-content">
+                    <div class="typing-indicator text-gray-500 dark:text-gray-400">
+                        <span class="pulse"></span>
+                        <span class="pulse"></span>
+                        <span class="pulse"></span>
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(typingDiv);
+            scrollToBottom();
+        }
+        
+        function removeTypingIndicator(id) {
+            const typingElement = document.getElementById(id);
+            if (typingElement) {
+                typingElement.remove();
+            }
+        }
+        
+        async function generateText(prompt) {
+            try {
+                // Show processing state
+                const processingId = `processing-${Date.now()}`;
+                const processingDiv = document.createElement('div');
+                processingDiv.id = processingId;
+                processingDiv.className = 'flex items-start gap-2 fade-in';
+                processingDiv.innerHTML = `
+                    <div class="flex-shrink-0 w-7 h-7 rounded-lg bg-indigo-500 text-white flex items-center justify-center message-avatar">
+                        <i class="fas fa-robot text-xs"></i>
+                    </div>
+                    <div class="bg-gray-100 dark:bg-gray-800 rounded-xl p-3 max-w-[calc(100%-50px)] lg:max-w-[80%] message-content">
+                        <p class="shimmer text-sm">Processing your request...</p>
+                    </div>
+                `;
+                chatContainer.appendChild(processingDiv);
+                scrollToBottom();
+                
+                const apiUrl = `https://text.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+                
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+                
+                let responseText = await response.text();
+                
+                // Remove processing indicator
+                removeTypingIndicator(processingId);
+                
+                // Clean and format response
+                responseText = cleanResponseText(responseText);
+                let formattedResponse = formatResponse(prompt, responseText);
+
+                // Save generated text
+                const textId = `text-${Date.now()}`;
+                generatedTexts[textId] = {
+                    id: textId,
+                    prompt: prompt,
+                    content: formattedResponse,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('generatedTexts', JSON.stringify(generatedTexts));
+
+                // Add AI response to UI
+                addMessage('ai', formattedResponse, 'text');
+
+                // Add AI response to current chat
+                chats[currentChatId].messages.push({
+                    sender: 'ai',
+                    content: formattedResponse,
+                    type: 'text',
+                    timestamp: Date.now()
+                });
+                saveChats();
+            } catch (error) {
+                console.error('Error generating text:', error);
+                addMessage('ai', "Sorry, I encountered an error processing your request. Please try again.", 'text');
+            }
+        }
+
+        function cleanResponseText(text) {
+            // Remove markdown formatting characters
+            text = text.replace(/\*\*/g, '')  // Remove **bold**
+                      .replace(/\*/g, '')     // Remove *italics*
+                      .replace(/__/g, '')     // Remove __underline__
+                      .replace(/~~/g, '')     // Remove ~~strikethrough~~
+                      .replace(/^#+\s+/gm, '') // Remove markdown headers
+                      .replace(/\[(.*?)\]\(.*?\)/g, '$1'); // Remove markdown links
+            
+            // Clean up bullet points
+            text = text.replace(/^\s*[-*+]\s+/gm, '• '); // Standardize bullet points
+            
+            return text;
+        }
+
+        function formatResponse(prompt, responseText) {
+            // Check for code blocks
+            if (responseText.includes('```')) {
+                const codeContent = responseText.replace(/```[\s\S]*?```/g, match => {
+                    const code = match.replace(/```[a-z]*\n?|\n?```/g, '');
+                    return `<pre><code>${code}</code></pre>`;
+                });
+                
+                return `
+                    <div class="ai-message">
+                        <h2 class="text-lg"><i class="fas fa-code mr-2"></i>Code Solution</h2>
+                        <p class="text-sm">Here's a solution for your request:</p>
+                        ${codeContent}
+                        <h2 class="text-lg"><i class="fas fa-lightbulb mr-2"></i>Explanation</h2>
+                        <p class="text-sm">Key points about this solution:</p>
+                        <ul class="text-sm">
+                            <li><strong>Approach</strong>: Provides an efficient solution</li>
+                            <li><strong>Implementation</strong>: Clean and well-structured</li>
+                            <li><strong>Usage</strong>: Ready to implement in your project</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // Check for list-like responses
+            if (responseText.split('\n').length > 5 || 
+                responseText.toLowerCase().includes('step') || 
+                responseText.toLowerCase().includes('tip') ||
+                responseText.toLowerCase().includes('1.') ||
+                responseText.toLowerCase().includes('* ') ||
+                responseText.toLowerCase().includes('- ')) {
+                return `
+                    <div class="ai-message">
+                        <h2 class="text-lg"><i class="fas fa-list-ul mr-2"></i>Detailed Response</h2>
+                        ${formatAsBulletPoints(responseText)}
+                    </div>
+                `;
+            }
+            
+            // Default formatted response
+            return `
+                <div class="ai-message">
+                    <h2 class="text-lg"><i class="fas fa-comment-dots mr-2"></i>Response</h2>
+                    <p class="text-sm">${responseText}</p>
+                </div>
+            `;
+        }
+
+        function formatAsBulletPoints(text) {
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            if (lines.length <= 1) return `<p class="text-sm">${text}</p>`;
+            
+            return `
+                <p class="text-sm">Here are the key points:</p>
+                <ul class="text-sm">
+                    ${lines.map(line => {
+                        // Clean up bullet points if they already exist
+                        const cleanedLine = line.replace(/^\s*[\d*\-+.]\s+/, '').trim();
+                        return `<li>${cleanedLine}</li>`;
+                    }).join('')}
+                </ul>
+            `;
+        }
+        
+        function generateImage(prompt) {
+            // Remove "image:" prefix if present
+            const cleanPrompt = prompt.toLowerCase().startsWith('image:') 
+                ? prompt.substring(6).trim() 
+                : prompt;
+            
+            // Show image loading state
+            const loadingId = `loading-${Date.now()}`;
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = loadingId;
+            loadingDiv.className = 'flex items-start gap-2 fade-in';
+            loadingDiv.innerHTML = `
+                <div class="flex-shrink-0 w-7 h-7 rounded-lg bg-indigo-500 text-white flex items-center justify-center message-avatar">
+                    <i class="fas fa-robot text-xs"></i>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-800 rounded-xl p-3 max-w-[calc(100%-50px)] lg:max-w-[80%] message-content">
+                    <div class="image-loading rounded-lg w-full h-32 flex items-center justify-center text-gray-500 dark:text-gray-400 text-sm">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        Generating your image...
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(loadingDiv);
+            scrollToBottom();
+
+            // Use Pollinations AI image generation API
+            const apiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}`;
+            
+            // Create image element
+            const img = new Image();
+            img.src = apiUrl;
+            
+            img.onload = function() {
+                // Remove loading indicator
+                removeTypingIndicator(loadingId);
+                
+                // Add the actual image
+                addMessage('ai', apiUrl, 'image');
+
+                // Save generated image
+                const imageId = `image-${Date.now()}`;
+                generatedImages[imageId] = {
+                    id: imageId,
+                    prompt: cleanPrompt,
+                    url: apiUrl,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('generatedImages', JSON.stringify(generatedImages));
+
+                // Add AI response to current chat
+                chats[currentChatId].messages.push({
+                    sender: 'ai',
+                    content: apiUrl,
+                    type: 'image',
+                    timestamp: Date.now()
+                });
+                saveChats();
+            };
+            
+            img.onerror = function() {
+                // Remove loading indicator
+                removeTypingIndicator(loadingId);
+                
+                // Show error message
+                addMessage('ai', "Sorry, I couldn't generate that image. Please try a different description.", 'text');
+            };
+        }
+        
+        function addMessage(sender, content, type = 'text') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-enter';
+            
+            if (type === 'text') {
+                messageDiv.innerHTML = `
+                    <div class="flex items-start gap-2 ${sender === 'user' ? 'justify-end' : ''}">
+                        ${sender === 'ai' ? `
+                            <div class="flex-shrink-0 w-7 h-7 rounded-lg bg-indigo-500 text-white flex items-center justify-center message-avatar">
+                                <i class="fas fa-robot text-xs"></i>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="group bg-gray-100 dark:bg-gray-800 rounded-xl p-3 max-w-[calc(100%-50px)] lg:max-w-[80%] relative message-content
+                            ${sender === 'user' ? 'bg-indigo-500 text-white' : ''}">
+                            <button class="copy-btn absolute top-1.5 right-1.5 p-1 rounded-md ${sender === 'user' ? 'text-white/80 hover:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'} hover:bg-black/10 transition opacity-0 group-hover:opacity-100">
+                                <i class="fas fa-copy text-xs"></i>
+                            </button>
+                            ${sender === 'ai' && content.startsWith('<div') ? content : `<p class="text-sm">${content}</p>`}
+                        </div>
+                        
+                        ${sender === 'user' ? `
+                            <div class="flex-shrink-0 w-7 h-7 rounded-lg bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center message-avatar">
+                                <i class="fas fa-user text-xs"></i>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                // Add copy functionality
+                const copyBtn = messageDiv.querySelector('.copy-btn');
+                if (copyBtn) {
+                    copyBtn.addEventListener('click', () => {
+                        const textToCopy = sender === 'ai' && content.startsWith('<div') 
+                            ? stripHtml(content) 
+                            : content;
+                        copyToClipboard(textToCopy);
+                        showToast('Copied to clipboard!');
+                    });
+                }
+            } 
+            else if (type === 'image') {
+                messageDiv.innerHTML = `
+                    <div class="flex items-start gap-2">
+                        <div class="flex-shrink-0 w-7 h-7 rounded-lg bg-indigo-500 text-white flex items-center justify-center message-avatar">
+                            <i class="fas fa-robot text-xs"></i>
+                        </div>
+                        <div class="group bg-gray-100 dark:bg-gray-800 rounded-xl p-3 max-w-[calc(100%-50px)] lg:max-w-[80%] relative message-content">
+                            <button class="copy-btn absolute top-1.5 right-1.5 p-1 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-black/10 transition opacity-0 group-hover:opacity-100">
+                                <i class="fas fa-copy text-xs"></i>
+                            </button>
+                            <img src="${content}" alt="Generated image" class="rounded-lg w-full h-auto max-h-64 object-cover">
+                            <div class="mt-2 flex justify-end">
+                                <button class="download-btn px-2 py-1 bg-indigo-500 hover:bg-indigo-600 text-white text-xs rounded-lg transition flex items-center">
+                                    <i class="fas fa-download mr-1 text-xs"></i> Download
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add copy functionality (copies image URL)
+                const copyBtn = messageDiv.querySelector('.copy-btn');
+                copyBtn.addEventListener('click', () => {
+                    copyToClipboard(content);
+                    showToast('Image URL copied!');
+                });
+                
+                // Add download functionality
+                const downloadBtn = messageDiv.querySelector('.download-btn');
+                downloadBtn.addEventListener('click', () => {
+                    downloadImage(content);
+                });
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        function createNewChat() {
+            currentChatId = `chat-${Date.now()}`;
+            chats[currentChatId] = {
+                id: currentChatId,
+                title: 'New Chat',
+                timestamp: Date.now(),
+                messages: []
+            };
+            saveChats();
+            updateChatList();
+            loadChat(currentChatId);
+            
+            // Close mobile sidebar if open
+            if (isMobileSidebarOpen) {
+                toggleMobileSidebar();
+            }
+        }
+        
+        function loadChat(chatId) {
+            currentChatId = chatId;
+            const chat = chats[chatId];
+            
+            // Clear chat container
+            chatContainer.innerHTML = '';
+            
+            // Add welcome message if empty
+            if (chat.messages.length === 0) {
+                chatContainer.innerHTML = `
+                    <div class="message-enter">
+                        <div class="flex items-start gap-2">
+                            <div class="flex-shrink-0 w-7 h-7 rounded-lg bg-indigo-500 text-white flex items-center justify-center message-avatar">
+                                <i class="fas fa-robot text-xs"></i>
+                            </div>
+                            <div class="bg-gray-100 dark:bg-gray-800 rounded-xl p-3 max-w-[calc(100%-50px)] lg:max-w-[80%] relative message-content">
+                                <button class="absolute top-1.5 right-1.5 p-1 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition opacity-0 group-hover:opacity-100">
+                                    <i class="fas fa-copy text-xs"></i>
+                                </button>
+                                <p class="text-sm">Hello! I'm your AI assistant. Ask me anything or say "image:" to generate images.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } 
+            // Add all messages from the chat
+            else {
+                chat.messages.forEach(msg => {
+                    addMessage(msg.sender, msg.content, msg.type || 'text');
+                });
+            }
+            
+            // Scroll to bottom
+            scrollToBottom();
+        }
+        
+        function updateChatList() {
+            chatList.innerHTML = '';
+            
+            // Sort chats by timestamp (newest first)
+            const sortedChats = Object.values(chats).sort((a, b) => b.timestamp - a.timestamp);
+            
+            sortedChats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.className = `p-2 rounded-lg cursor-pointer flex items-center justify-between transition text-sm ${currentChatId === chat.id ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`;
+                chatItem.innerHTML = `
+                    <div class="truncate flex-1">
+                        <h3 class="font-medium truncate">${chat.title}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            ${new Date(chat.timestamp).toLocaleString()}
+                        </p>
+                    </div>
+                    ${currentChatId === chat.id ? '<i class="fas fa-check ml-2 text-indigo-500 text-xs"></i>' : ''}
+                `;
+                chatItem.addEventListener('click', () => {
+                    loadChat(chat.id);
+                    if (window.innerWidth < 768) {
+                        toggleMobileSidebar();
+                    }
+                });
+                chatList.appendChild(chatItem);
+            });
+        }
+        
+        function saveChats() {
+            localStorage.setItem('aiChats', JSON.stringify(chats));
+        }
+        
+        function clearChatHistory() {
+            if (confirm('Are you sure you want to clear all chat history? This cannot be undone.')) {
+                localStorage.removeItem('aiChats');
+                localStorage.removeItem('generatedTexts');
+                localStorage.removeItem('generatedImages');
+                chats = {};
+                generatedTexts = {};
+                generatedImages = {};
+                createNewChat();
+                showToast('Chat history cleared');
+            }
+        }
+        
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+        
+        function setMode(mode) {
+            currentMode = mode;
+            
+            if (mode === 'text') {
+                textModeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                textModeBtn.classList.add('bg-indigo-500', 'text-white');
+                imageModeBtn.classList.remove('bg-indigo-500', 'text-white');
+                imageModeBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                messageInput.placeholder = "Type your message...";
+            } else {
+                imageModeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                imageModeBtn.classList.add('bg-indigo-500', 'text-white');
+                textModeBtn.classList.remove('bg-indigo-500', 'text-white');
+                textModeBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                messageInput.placeholder = "Describe the image you want...";
+            }
+        }
+        
+        function downloadImage(url) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ai-image-${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('Image download started');
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                console.log('Text copied to clipboard');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            });
+        }
+        
+        function stripHtml(html) {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            return doc.body.textContent || "";
+        }
+        
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toast.classList.remove('translate-y-16');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-16');
+            }, 3000);
+        }
+        
+        function scrollToBottom() {
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 100);
+        }
+        
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
