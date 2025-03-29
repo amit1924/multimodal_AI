@@ -2,7 +2,7 @@
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Advanced AI Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -200,6 +200,17 @@
                 margin-left: 0;
             }
         }
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            .input-container {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            
+            .send-btn {
+                width: 44px;
+                height: 44px;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
@@ -218,11 +229,12 @@
                     <i class="fas fa-robot"></i>
                 </div>
                 <h1 class="text-3xl font-bold gradient-text">Advanced AI Chat</h1>
-               
             </div>
           
-            <div class="flex  items-center space-x-4 ">
-                <a href="index.html">  <i class="fas fa-home"></i></a>
+            <div class="flex items-center space-x-4">
+                <a href="index.html" class="p-2 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-home"></i>
+                </a>
                 <button id="themeToggle" class="hidden md:block theme-toggle p-2 rounded-full bg-gray-800 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
                     <i class="fas fa-moon dark:hidden"></i>
                     <i class="fas fa-sun hidden dark:inline"></i>
@@ -279,11 +291,14 @@
                         <button id="imageMode" class="mode-btn px-3 py-1 rounded-full bg-gray-800 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-medium">Image</button>
                     </div>
                     <div class="flex space-x-2 flex-wrap gap-3">
-                        <input id="userInput" type="text" placeholder="Type your message or 'image: description'..." 
-                            class="flex-1 px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <button id="sendBtn" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition flex items-center justify-center">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
+                        <div class="flex-1 relative">
+                            <textarea id="userInput" rows="1" placeholder="Type your message or 'image: description'..." 
+                                class="w-full px-4 py-2 pr-12 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                style="min-height: 44px; max-height: 120px;"></textarea>
+                            <button id="sendBtn" class="absolute right-2 bottom-1 p-2 text-gray-500 dark:text-gray-400 hover:text-blue-500 transition">
+                                <i class="fas fa-paper-plane text-lg"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -321,7 +336,7 @@
         </div>
 
         <!-- Floating Download Button -->
-        <button id="openDrawer" class="fixed bottom-[90px]  md:bottom-6 right-3 md:right-6  md:bg-blue-500 text-white text-lg  md:rounded-full p-4 shadow-lg hover:bg-blue-600 transition z-40">
+        <button id="openDrawer" class="fixed bottom-[90px] md:bottom-6 right-5 md:right-6 md:bg-blue-500 text-white text-lg md:rounded-full p-4 shadow-lg hover:bg-blue-600 transition z-40">
             <i class="fas fa-download"></i>
         </button>
 
@@ -385,12 +400,18 @@
                 };
                 saveChats();
             }
+
+            // Auto-resize textarea
+            setupTextareaAutoResize();
         }
 
         // Event Listeners
         sendBtn.addEventListener('click', sendMessage);
-        userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
         });
 
         newChatBtn.addEventListener('click', createNewChat);
@@ -409,6 +430,13 @@
         sidebarOverlay.addEventListener('click', toggleSidebar);
 
         // Functions
+        function setupTextareaAutoResize() {
+            userInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+
         function toggleSidebar() {
             sidebar.classList.toggle('open');
             sidebarOverlay.classList.toggle('open');
@@ -442,6 +470,7 @@
 
             // Clear input
             userInput.value = '';
+            userInput.style.height = 'auto';
 
             // Show typing indicator
             const typingIndicator = document.createElement('div');
@@ -460,7 +489,7 @@
                 </div>
             `;
             chatContainer.appendChild(typingIndicator);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            scrollToBottom();
 
             // Generate response
             setTimeout(() => {
@@ -492,7 +521,7 @@
                     </div>
                 `;
                 chatContainer.appendChild(processingIndicator);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+                scrollToBottom();
 
                 const apiUrl = `https://text.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
                 
@@ -637,7 +666,7 @@
                 </div>
             `;
             chatContainer.appendChild(loadingDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            scrollToBottom();
 
             // Use Pollinations AI image generation API
             const apiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}`;
@@ -747,7 +776,7 @@
             }
             
             chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            scrollToBottom();
         }
 
         function createNewChat() {
@@ -792,7 +821,7 @@
             });
             
             // Scroll to bottom
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            scrollToBottom();
             
             // Close sidebar on mobile after selecting a chat
             if (window.innerWidth <= 768) {
@@ -855,15 +884,15 @@
         function setMode(mode) {
             currentMode = mode;
             if (mode === 'text') {
-                textModeBtn.classList.add('bg-red-800', 'text-white');
-                textModeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
-                imageModeBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
+                textModeBtn.classList.add('bg-blue-500', 'text-white');
+                textModeBtn.classList.remove('bg-gray-800', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-200');
+                imageModeBtn.classList.add('bg-gray-800', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-200');
                 imageModeBtn.classList.remove('bg-blue-500', 'text-white');
                 userInput.placeholder = "Type your message...";
             } else {
-                imageModeBtn.classList.add('bg-red-800', 'animate-pulse','text-white');
-                imageModeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
-                textModeBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
+                imageModeBtn.classList.add('bg-blue-500', 'text-white');
+                imageModeBtn.classList.remove('bg-gray-800', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-200');
+                textModeBtn.classList.add('bg-gray-800', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-200');
                 textModeBtn.classList.remove('bg-blue-500', 'text-white');
                 userInput.placeholder = "Describe the image you want to generate...";
             }
@@ -980,6 +1009,12 @@
             setTimeout(() => {
                 toast.classList.add('translate-y-16');
             }, 3000);
+        }
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 100);
         }
 
         // Initialize the app
