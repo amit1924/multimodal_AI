@@ -19,7 +19,7 @@
                 height: calc(100vh - 160px);
             }
         }
-        @media (max-width: 500px) {
+        @media (max-width: 400px) {
             .chat-height {
                 height: calc(85vh - 160px);
             }
@@ -278,10 +278,10 @@
                         <button id="textMode" class="mode-btn px-3 py-1 rounded-full bg-blue-500 text-white text-sm font-medium">Text</button>
                         <button id="imageMode" class="mode-btn px-3 py-1 rounded-full bg-gray-800 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-medium">Image</button>
                     </div>
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-2 flex-wrap gap-3">
                         <input id="userInput" type="text" placeholder="Type your message or 'image: description'..." 
                             class="flex-1 px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <button id="sendBtn" class="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition flex items-center justify-center">
+                        <button id="sendBtn" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition flex items-center justify-center">
                             <i class="fas fa-paper-plane"></i>
                         </button>
                     </div>
